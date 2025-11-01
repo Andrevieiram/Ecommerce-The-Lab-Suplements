@@ -1,0 +1,31 @@
+#home-container{
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+#header{
+    display: flex;
+    flex-flow: row;
+    background-color: #272932;
+    width: 100%;
+    height: 11vh;
+    button{
+        background-color: transparent;
+    }
+    #brand{
+        border-color: transparent;
+        #logo{
+            height: 100%;
+        }
+    }
+    #avatar{
+        border-color: transparent;
+        border-radius: 300vh;
+        #picture{
+            height: 100%;
+        }
+    }
+}
