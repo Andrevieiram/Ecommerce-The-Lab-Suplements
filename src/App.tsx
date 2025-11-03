@@ -1,15 +1,14 @@
 import './App.css'
 import Home from './Home/Home'
-import Products from './Products/Products'
+import Users from './Users/Users'
 
 import { Routes, Route } from 'react-router-dom'
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/produtos" element={<Products />} /> 
-
+      <Route path="/produto" element={<Home />} />
+      <Route path="/users" element={<Users />} /> 
     </Routes>
   );
 }
