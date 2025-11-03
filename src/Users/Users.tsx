@@ -24,12 +24,12 @@ const Users = () => {
       <main className="main-users">
         <div className="main-title">
             <h1>Gerenciamento de Usuários</h1>
-            <button className="userAdd-button">Adicionar Usuário</button>
+            <button className="userAdd-button">Adicionar Novo Usuários</button>
           
         </div>
 
         <div className="users-table-container">
-            
+
                       
         </div>
             
