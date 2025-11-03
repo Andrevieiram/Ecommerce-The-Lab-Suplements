@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 import './Home.css';
 const Home = () => {
   return (
@@ -15,9 +17,11 @@ const Home = () => {
             <div id='titulo'>
               <p>FitSupply Admin</p>
             </div>
-            <button>
-              <span>Produtos</span>
-            </button>
+            <Link to="/produtos"> 
+              <button>
+                <span>Produtos</span>
+              </button>
+            </Link>
             <button>
               <span>Promoções</span>
             </button>
