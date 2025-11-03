@@ -6,33 +6,58 @@ const Home = () => {
             <button id="brand">
                 <img id="logo" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png"></img>
             </button>
-            <nav id="menu-nav">
-
-            </nav>
             <button id="avatar">
                 <img id='picture' src='images\avatar.png'></img>
             </button>
         </header>
+        <main>
+          <div id='left-container'>
+            <div id='titulo'>
+              <p>FitSupply Admin</p>
+            </div>
+            <button>
+              <span>Produtos</span>
+            </button>
+            <button>
+              <span>Promoções</span>
+            </button>
+            <button>
+              <span>Usuários</span>
+            </button>
+          </div>
 
-        <section id="hero">
+          <div className='grid-produtos'>
+            <div className='topo'>
+              <div className='botao-titulo'>
+                <h2>Gerenciamento de produtos</h2>
+                <button>
+                  <span>Adicionar produto</span>
+                </button>
+              </div>
+              <input type='text' placeholder='Buscar produto...' className='search'></input>
+            </div>
 
-        </section>
+            <table id='lista-produtos'>
+              <tr>
+              <th>Nome</th>
+              <th>Categoria</th>
+              <th>Estoque</th>
+              <th>Preço</th>
+              <th>Status</th>
+              </tr>
+              <tr>
+                <td>Whey Protein Isolado 1kg</td>	
+                <td>Suplementos</td>	
+                <td>150 un.</td>	
+                <td>R$ 129.90</td>	
+                <td>Ativo</td>
+              </tr>
+            </table>
+          </div>
 
-        <section id="features">
+
             
-        </section>
-
-        <section id="products">
-            
-        </section>
-
-        <section id="about">
-            
-        </section>
-
-        <footer id="footer">
-
-        </footer>
+        </main>
     </div>
   )
 }
