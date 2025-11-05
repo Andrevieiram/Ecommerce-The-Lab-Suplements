@@ -28,7 +28,7 @@ const Home = () => {
           
         </div>
 
-        <div className="products-table-container">
+        <div id="products-table-container">
           <table id='lista-produtos'>
               <tr>
               <th>Nome</th>
