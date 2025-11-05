@@ -62,9 +62,9 @@
     z-index: 20;     
 
     .logo-left{
-    width: 60%;
-    margin-top: 10px;
-    margin-bottom: 20px;
+        width: 60%;
+        margin-top: 10px;
+        margin-bottom: 20px;
     }
 
     .nav-items {
@@ -195,15 +195,11 @@
     right: 0;
     background-color: rgb(221, 218, 218);
     #lista-produtos{
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        margin-top: 25px;
-        border: solid #8A00C5 1px;
-        padding: 10px
-        
+        width: 100%;
+        border-collapse: collapse;
+
     }
+    
 }
 
 

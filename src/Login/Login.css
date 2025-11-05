@@ -2,6 +2,7 @@
   position: relative;
   height: 100vh;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   font-family: 'Poppins', sans-serif;
@@ -25,18 +26,15 @@
 }
 
 
-.logo-left {
-  position: fixed;
+.logo-left-login {
+  position:absolute;
   top: 05px;
-  left: 50%;
-  transform: translate(-50%);
-  width: 180px;
-  height: 90px;
-  background-image: url("../assets/WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png");
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  img{
+    width: 100%;
+  }
 }
 
 #login-container {
@@ -56,6 +54,7 @@
   padding: 2.5rem 2rem;
   text-align: center;
   font-family: 'Poppins', sans-serif;
+  margin-top: 20px;
 }
 
 #login-container h2 {

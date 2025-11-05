@@ -13,7 +13,7 @@ const Home = () => {
           <img className="logo-left" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
       
           <div className="nav-items">
-            <button className="nav-item">Dashboard</button>
+            <button className="nav-item" onClick={() => navigate('/promoções')}>Promoções</button>
             <button className="nav-item-active">Produtos</button>
             <button className="nav-item">Usuários</button>
           </div>
