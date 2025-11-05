@@ -1,9 +1,9 @@
-import './App.css'
-import Home from './Home/Home'
-import Users from './Users/Users'
+import './App.css';
+import Home from './Home/Home';
+import Users from './Users/Users';
 import Login from './Login/Login';
 
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom';
 
 function App() {
   return (

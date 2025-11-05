@@ -1,43 +1,35 @@
 import './Home.css';
+
 const Home = () => {
   return (
-    <div id="home-container">
-        <header id="header">
-            <button id="brand">
-                <img id="logo" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png"></img>
-            </button>
-            <button id="avatar">
+    <div className = "users-container">
+      <header className="header-container">
+        <button className="avatar">
                 <img id='picture' src='images\avatar.png'></img>
-            </button>
-        </header>
-        <main>
-          <div id='left-container'>
-            <div id='titulo'>
-              <p>FitSupply Admin</p>
-            </div>
-            <button>
-              <span>Produtos</span>
-            </button>
-            <button>
-              <span>Promoções</span>
-            </button>
-            <button>
-              <span>Usuários</span>
-            </button>
+        </button>
+      </header>
+
+      <nav className="leftNav-container">
+          <img className="logo-left" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
+      
+          <div className="nav-items">
+            <button className="nav-item">Dashboard</button>
+            <button className="nav-item-active">Produtos</button>
+            <button className="nav-item">Usuários</button>
           </div>
 
-          <div className='grid-produtos'>
-            <div className='topo'>
-              <div className='botao-titulo'>
-                <h2>Gerenciamento de produtos</h2>
-                <button>
-                  <span>Adicionar produto</span>
-                </button>
-              </div>
-              <input type='text' placeholder='Buscar produto...' className='search'></input>
-            </div>
+          <button className="nav-item-logout">Logout</button>
+      </nav>
 
-            <table id='lista-produtos'>
+      <main className="main-products">
+        <div className="main-title">
+            <h1>Gerenciamento de Produtos</h1>
+            <button className="productAdd-button">Adicionar Novo Produto</button>
+          
+        </div>
+
+        <div className="products-table-container">
+          <table id='lista-produtos'>
               <tr>
               <th>Nome</th>
               <th>Categoria</th>
@@ -53,11 +45,15 @@ const Home = () => {
                 <td>Ativo</td>
               </tr>
             </table>
-          </div>
-
-
+                      
+        </div>
             
-        </main>
+                    
+        
+      </main>
+
+      
+      
     </div>
   )
 }
