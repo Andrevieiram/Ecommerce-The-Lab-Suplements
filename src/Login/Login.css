@@ -6,6 +6,7 @@
   align-items: center;
   font-family: 'Poppins', sans-serif;
   overflow: hidden;
+  z-index: 0;
 }
 
 #background-container::before {
@@ -20,12 +21,22 @@
   background-position: center;
   filter: blur(2px) brightness(0.3);
   transform: scale(1.0);
-  z-index: 0;
+  z-index: -1;
 }
 
-#background-container * {
-  position: relative;
-  z-index: 1;
+
+.logo-left {
+  position: fixed;
+  top: 05px;
+  left: 50%;
+  transform: translate(-50%);
+  width: 180px;
+  height: 90px;
+  background-image: url("../assets/WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  z-index: 1000;
 }
 
 #login-container {
@@ -106,4 +117,10 @@ form {
 #login-container button:hover {
   background-color: #F5F5F5;
   color: #1A1423;
+}
+
+#login-container .register-link {
+  margin-top: 1.2rem;
+  font-size: 0.9rem;
+  color: #dcdcdc;
 }

@@ -3,7 +3,10 @@ import './Login.css';
 const Login = () => {
   return (
     <div id="background-container">
+      <div className = "logo-left"></div>
+
       <div id="login-container">
+      
         <h2>Sign in</h2>
         <form>
           <div className="input-group">
