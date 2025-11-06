@@ -3,6 +3,7 @@ import "./Users.css";
 import ModalCadastro from './ModalCadastro'; 
 import { getFromLocalStorage } from './StorageUsers'; 
 import { NavLink } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface User {
   id: string; 
@@ -36,6 +37,12 @@ const Users = () => {
     loadUsers(); 
   };
 
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    navigate('/');
+  };
+
   return (
     <div className = "users-container">
       <header className="header-container">
@@ -67,7 +74,7 @@ const Users = () => {
             </NavLink>
 
           </div>
-          <button className="nav-item-logout">Logout</button>
+          <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
       </nav>
 
       <main className="main-users">
