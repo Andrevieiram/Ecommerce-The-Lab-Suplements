@@ -1,14 +1,21 @@
 import './Login.css';
+import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
+  const navigate = useNavigate();
+
+  const handleLogin = (event: React.FormEvent) => {
+    event.preventDefault();
+    navigate('/produtos');
+  };
+
   return (
     <div id="background-container">
-      <div className = "logo-left-login"><img src='images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png'></img></div>
+      <div className="logo-left-login"><img src='images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png'></img></div>
 
       <div id="login-container">
-      
         <h2>Sign in</h2>
-        <form>
+        <form onSubmit={handleLogin}>
           <div className="input-group">
             <label htmlFor="username">User</label>
             <input type="text" id="username" placeholder="Enter User" />

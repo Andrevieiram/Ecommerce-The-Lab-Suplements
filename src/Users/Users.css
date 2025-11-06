@@ -39,8 +39,6 @@
 }
 
 
-
-
 .leftNav-container{
     display: flex;
     flex-direction: column;
@@ -131,7 +129,6 @@
 }
 
 
-
 .main-users{
     position: absolute;
     left: 17%;           
@@ -178,18 +175,64 @@
 }
 
 
+
 .users-table-container{
-    width: 100%;
-    height: calc(85vh - 30px); /* Ajusta a altura considerando a main-title e a margem */
-    overflow-x: auto;
+    height: calc(85vh - 30px); 
     position: absolute;
-    top: calc(15vh + 10px); /* Considera a altura do main-title e a margem */
+    top: calc(15vh + 10px); 
     bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: rgb(221, 218, 218);
+    background-color: rgb(255, 255, 255);
+    
+    left: 20px;
+    right: 20px;
+    width: auto; 
+   
+    border-radius: 10px;
+
+    
+    overflow-y: auto; 
+    overflow-x: auto;
 }
 
 
 
 
+.users-table {
+  width: 100%;
+  border-collapse: collapse; 
+  background-color: white;
+  
+ 
+  border-radius: 10px;
+  overflow: hidden; 
+}
+
+.users-table th,
+.users-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  text-align: left;
+  color: #333;
+}
+
+.users-table th {
+  background-color: #8A00C5; 
+  color: white;
+  font-weight: bold;
+}
+
+/* Efeito 'zebra' */
+.users-table tbody tr:nth-of-type(even) {
+  background-color: #f9f9f9;
+}
+
+.users-table tbody tr:hover {
+  background-color: #f1f1f1; 
+}
+
+.table-empty {
+  text-align: center;
+  font-style: italic;
+  color: #888;
+  padding: 20px;
+}
