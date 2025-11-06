@@ -2,10 +2,12 @@
   position: relative;
   height: 100vh;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   font-family: 'Poppins', sans-serif;
   overflow: hidden;
+  z-index: 0;
 }
 
 #background-container::before {
@@ -20,12 +22,19 @@
   background-position: center;
   filter: blur(2px) brightness(0.3);
   transform: scale(1.0);
-  z-index: 0;
+  z-index: -1;
 }
 
-#background-container * {
-  position: relative;
-  z-index: 1;
+
+.logo-left-login {
+  position:absolute;
+  top: 05px;
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+  img{
+    width: 100%;
+  }
 }
 
 #login-container {
@@ -45,6 +54,7 @@
   padding: 2.5rem 2rem;
   text-align: center;
   font-family: 'Poppins', sans-serif;
+  margin-top: 20px;
 }
 
 #login-container h2 {
@@ -106,4 +116,10 @@ form {
 #login-container button:hover {
   background-color: #F5F5F5;
   color: #1A1423;
+}
+
+#login-container .register-link {
+  margin-top: 1.2rem;
+  font-size: 0.9rem;
+  color: #dcdcdc;
 }

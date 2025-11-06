@@ -3,7 +3,10 @@ import './Login.css';
 const Login = () => {
   return (
     <div id="background-container">
+      <div className = "logo-left-login"><img src='images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png'></img></div>
+
       <div id="login-container">
+      
         <h2>Sign in</h2>
         <form>
           <div className="input-group">
