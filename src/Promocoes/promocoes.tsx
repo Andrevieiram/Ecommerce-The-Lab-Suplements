@@ -1,101 +1,141 @@
-import { useNavigate } from 'react-router-dom'; 
-import './promocoes.css';
+import { useNavigate, NavLink } from 'react-router-dom'; 
+import './Promocoes.css';
+import { getPromocoes, savePromocoes } from './StoragePromocoes.tsx'; 
+import ModalPromocao from './ModalPromocao.tsx'; 
+import { useState, useEffect } from 'react';
 
 
-const Home = () => {
+interface Promocao {
+  id: string; 
+  name: string;
+  discount: string; 
+  status: 'Ativa' | 'Inativa';
+}
 
+const Promocoes = () => {
   const navigate = useNavigate(); 
-
   
-
-  const goToUsers = () => {
-    navigate('/promocoes'); 
+  const [promocoes, setPromocoes] = useState<Promocao[]>([]); 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const loadPromocoes = () => {
+    const storedPromocoes = getPromocoes<Promocao[]>('promocoes') || []; 
+    setPromocoes(storedPromocoes);
   };
-
-  const goToProducts = () => {
-    navigate('/produtos'); 
+  
+  const handleDelete = (idToDelete: string) => {
+    const updatedPromocoes = promocoes.filter(p => p.id !== idToDelete);
+    setPromocoes(updatedPromocoes);
+    savePromocoes('promocoes', updatedPromocoes); 
+  };
+  
+  const handlePromocaoAdded = (newPromocao: Promocao) => {
+      setPromocoes(prev => [...prev, newPromocao]);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    navigate('/');
+    localStorage.removeItem('isAuthenticated'); 
+    navigate('/'); 
   };
 
+  const goToUsers = () => {
+    navigate('/usuarios'); 
+  };
 
+  const abrirModal = () => setIsModalOpen(true);
+  
+  const fecharModal = () => {
+      setIsModalOpen(false);
+      loadPromocoes(); 
+  }
+
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('isAuthenticated');
+    if (!isAuthenticated) {
+        navigate('/');
+        return; 
+    }
+    
+    loadPromocoes();
+  }, [navigate]);
+  
 
   return (
-    <div className = "users-container">
+    <div className="promocoes-container">
       <header className="header-container">
         <button className="avatar">
-                <img id='picture' src='images\avatar.png'></img>
+                <img id='picture' src='images/avatar.png' alt="Avatar" />
         </button>
       </header>
-
+      
       <nav className="leftNav-container">
-          <img className="logo-left" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
+          <img className="logo-left" src="images/WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
       
           <div className="nav-items">
-            <button className="nav-item" onClick={goToProducts}>Produtos</button>
-            <button className="nav-item-active">Promoções</button>
-            <button className="nav-item" onClick={goToUsers}>Usuários</button>
+            <NavLink to="/promocoes" className={() => "nav-item-active"}>Promoções</NavLink>
+            <NavLink to="/produtos" className={() => "nav-item"}>Produtos</NavLink>
+            <NavLink to="/usuarios" className={() => "nav-item"}>Usuários</NavLink>
           </div>
 
           <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
       </nav>
 
-      <main className="main-products">
+      <main className="main-promocoes">
         <div className="main-title">
-            <h1>Gerenciamento de Produtos em Promoção</h1>
-            <button className="productAdd-button">Adicionar Nova Promoção</button>
-          
+            <h1>Gerenciamento de Promoções</h1>
+            <button className="promocaoAdd-button" onClick={abrirModal}>
+                Adicionar Nova Promoção
+            </button>
         </div>
 
-        <div id="products-table-container">
-          <table id='lista-produtos'>
+        <div className="promocoes-table-container">
+          <table className="promocoes-table">
             <thead>
               <tr>
-              <th>Nome</th>
-              <th>Categoria</th>
-              <th>Estoque</th>
-              <th>Novo Preço</th>
-              <th>Promoção aplicada</th>
-              <th>Status</th>
+                <th>ID</th> 
+                <th>Nome</th> 
+                <th>Desconto</th>
+                <th>Status</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>Whey Protein Isolado 1kg</td>	
-                <td>Suplementos</td>	
-                <td>150 un.</td>	
-                <td>R$ 103.92</td>	
-                <td> 20% </td>
-                <td>Ativo</td>
-              </tr>
-              <tr>
-                <td>Creatina Pura 300g</td>	
-                <td>Suplementos</td>	
-                <td>150 un.</td>	
-                <td>R$ 39.10</td>	
-                <td> 15% </td>
-                <td>Ativo</td>
-              </tr>
+                {promocoes.length > 0 ? (
+                promocoes.map((p: Promocao) => (
+                  <tr key={p.id}>
+                  <td>{p.id}</td> 
+                  <td>{p.name}</td>
+                  <td>{p.discount}</td> 
+                  <td>{p.status}</td> 
+                  <td>
+                    <button 
+                      className="table-action-button-remove" 
+                      onClick={() => handleDelete(p.id)}
+                    >
+                      Remover
+                    </button>
+                  </td>
+                  </tr>
+                ))
+                ) : (
+                <tr>
+                  <td colSpan={6} className="table-empty">
+                  Nenhuma promoção cadastrada.
+                  </td>
+                </tr>
+                )}
             </tbody>
           </table>
-                      
         </div>
-            
-                    
-        
       </main>
-
       
-      
+      <ModalPromocao 
+          isOpen={isModalOpen} 
+          onClose={fecharModal} 
+          onPromocaoAdded={handlePromocaoAdded} 
+      />
     </div>
   )
 }
 
-export default Home
-
-
-
-
+export default Promocoes;
