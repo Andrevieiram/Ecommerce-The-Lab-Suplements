@@ -85,3 +85,10 @@
 .form-submit-button:hover {
   background-color: #71079e;
 }
+
+
+.error-message {
+  color: #d00000; 
+  font-size: 0.85rem;
+  margin-top: 3px;
+}

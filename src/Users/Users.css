@@ -221,7 +221,6 @@
   font-weight: bold;
 }
 
-/* Efeito 'zebra' */
 .users-table tbody tr:nth-of-type(even) {
   background-color: #f9f9f9;
 }
@@ -235,4 +234,20 @@
   font-style: italic;
   color: #888;
   padding: 20px;
+}
+
+
+.table-action-button-remove {
+  background-color: #e63946; 
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.table-action-button-remove:hover {
+  background-color: #d00000; 
 }
