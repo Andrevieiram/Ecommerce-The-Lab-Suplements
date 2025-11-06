@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react'; 
+import { useState, useEffect } from 'react';
 import "./Users.css";
-import ModalCadastro from './ModalCadastro'; 
-import { getFromLocalStorage } from './StorageUsers'; 
+import ModalCadastro from './ModalCadastro';
+import { getFromLocalStorage, saveToLocalStorage } from './StorageUsers';
 import { NavLink } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
 interface User {
-  id: string; 
+  id: string;
   name: string;
   cpf: string;
   email: string;
@@ -14,11 +14,8 @@ interface User {
 
 const Users = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  //estado para armazenar a lista de usuários
   const [users, setUsers] = useState<User[]>([]);
 
-  //função para carregar os usuários do storage
   const loadUsers = () => {
     const storedUsers = getFromLocalStorage<User[]>('users') || [];
     setUsers(storedUsers);
@@ -26,7 +23,7 @@ const Users = () => {
 
   useEffect(() => {
     loadUsers();
-  }, []); 
+  }, []);
 
   const abrirModal = () => {
     setIsModalOpen(true);
@@ -34,7 +31,16 @@ const Users = () => {
   
   const fecharModal = () => {
     setIsModalOpen(false);
-    loadUsers(); 
+    loadUsers();
+  };
+
+  const handleDelete = (userId: string) => {
+    if (window.confirm("Tem certeza que deseja remover este usuário?")) {
+      const existingUsers = getFromLocalStorage<User[]>('users') || [];
+      const updatedUsers = existingUsers.filter(user => user.id !== userId);
+      saveToLocalStorage('users', updatedUsers);
+      setUsers(updatedUsers);
+    }
   };
 
   const navigate = useNavigate();
@@ -44,7 +50,7 @@ const Users = () => {
   };
 
   return (
-    <div className = "users-container">
+    <div className="users-container">
       <header className="header-container">
       </header>
 
@@ -53,25 +59,20 @@ const Users = () => {
           <div className="nav-items">
             
             <NavLink 
-              to="/" 
-              className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
-            >
-              Dashboard
-            </NavLink>
-
-            <NavLink 
               to="/produtos" 
-              className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
+              className={({ isActive }) => isActive ? "nav-item" : "nav-item"}
             >
               Produtos
             </NavLink>
-
+            
             <NavLink 
-              to="/users" 
-              className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
+              to="/" 
+              className={({ isActive }) => isActive ? "nav-item" : "nav-item"}
             >
-              Usuários
+              Promoções
             </NavLink>
+            
+            <button className="nav-item-active">Usuários</button>
 
           </div>
           <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
@@ -89,23 +90,34 @@ const Users = () => {
           <table className="users-table">
             <thead>
               <tr>
+                <th>ID</th> 
                 <th>Nome</th>
                 <th>Email</th>
                 <th>CPF</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
               {users.length > 0 ? (
                 users.map(user => (
                   <tr key={user.id}>
+                    <td>{user.id}</td> 
                     <td>{user.name}</td>
                     <td>{user.email}</td>
                     <td>{user.cpf}</td>
+                    <td>
+                      <button 
+                        className="table-action-button-remove" 
+                        onClick={() => handleDelete(user.id)}
+                      >
+                        Remover
+                      </button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={3} className="table-empty">
+                  <td colSpan={5} className="table-empty">
                     Nenhum usuário cadastrado.
                   </td>
                 </tr>
@@ -115,7 +127,6 @@ const Users = () => {
         </div>
         
       </main>
-
 
       <ModalCadastro isOpen={isModalOpen} onClose={fecharModal} />
     </div>
