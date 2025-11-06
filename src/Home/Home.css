@@ -10,6 +10,7 @@
     position: fixed;
     top: 0;
     left: 0;
+    right: 3%;
     width: 100%;
     z-index: 10;
     box-sizing: border-box;
