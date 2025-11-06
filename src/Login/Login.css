@@ -27,7 +27,6 @@
 
 
 .logo-left-login {
-  position:absolute;
   top: 05px;
   display: flex;
   flex-direction: column;
@@ -54,12 +53,12 @@
   padding: 2.5rem 2rem;
   text-align: center;
   font-family: 'Poppins', sans-serif;
-  margin-top: 20px;
+  margin-top: 4px;
 }
 
 #login-container h2 {
   font-size: 1.8rem;
-  margin-bottom: 2.5rem;
+  margin-bottom: 1rem;
   font-weight: 700;
 }
 

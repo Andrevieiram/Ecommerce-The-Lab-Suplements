@@ -6,6 +6,7 @@ const Login = () => {
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault();
+    localStorage.setItem('isAuthenticated', 'true');
     navigate('/produtos');
   };
 

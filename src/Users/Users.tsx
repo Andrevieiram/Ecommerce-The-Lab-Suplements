@@ -46,12 +46,16 @@ const Users = () => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
     navigate('/');
   };
 
   return (
     <div className="users-container">
       <header className="header-container">
+        <button className="avatar">
+                <img id='picture' src='images\avatar.png'></img>
+        </button>
       </header>
 
       <nav className="leftNav-container">
