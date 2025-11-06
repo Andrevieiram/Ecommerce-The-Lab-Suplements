@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import "./Users.css";
 import ModalCadastro from './ModalCadastro'; 
 import { getFromLocalStorage } from './StorageUsers'; 
+import { NavLink } from 'react-router-dom';
 
 interface User {
   id: string; 
@@ -43,9 +44,28 @@ const Users = () => {
       <nav className="leftNav-container">
           <img className="logo-left" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
           <div className="nav-items">
-            <button className="nav-item">Promoções</button>
-            <button className="nav-item">Produtos</button>
-            <button className="nav-item-active">Usuários</button>
+            
+            <NavLink 
+              to="/" 
+              className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
+            >
+              Dashboard
+            </NavLink>
+
+            <NavLink 
+              to="/produtos" 
+              className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
+            >
+              Produtos
+            </NavLink>
+
+            <NavLink 
+              to="/users" 
+              className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
+            >
+              Usuários
+            </NavLink>
+
           </div>
           <button className="nav-item-logout">Logout</button>
       </nav>
