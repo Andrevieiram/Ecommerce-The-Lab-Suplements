@@ -59,13 +59,6 @@ const Users = () => {
           <div className="nav-items">
             
             <NavLink 
-              to="/" 
-              className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
-            >
-              Dashboard
-            </NavLink>
-
-            <NavLink 
               to="/produtos" 
               className={({ isActive }) => isActive ? "nav-item" : "nav-item"}
             >
