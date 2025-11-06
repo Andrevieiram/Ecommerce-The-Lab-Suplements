@@ -12,6 +12,16 @@ const Home = () => {
     navigate('/promocoes'); 
   };
 
+  const goToProducts = () => {
+    navigate('/produtos'); 
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    navigate('/');
+  };
+
+
 
   return (
     <div className = "users-container">
@@ -25,12 +35,12 @@ const Home = () => {
           <img className="logo-left" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
       
           <div className="nav-items">
-            <button className="nav-item">Promoções</button>
-            <button className="nav-item-active">Produtos</button>
+            <button className="nav-item" onClick={goToProducts}>Produtos</button>
+            <button className="nav-item-active">Promoções</button>
             <button className="nav-item" onClick={goToUsers}>Usuários</button>
           </div>
 
-          <button className="nav-item-logout">Logout</button>
+          <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
       </nav>
 
       <main className="main-products">
