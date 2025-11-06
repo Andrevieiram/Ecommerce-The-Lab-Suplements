@@ -56,7 +56,7 @@ const Users = () => {
               to="/" 
               className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
             >
-              Dashboard
+              Promoções
             </NavLink>
 
             <NavLink 
@@ -67,8 +67,8 @@ const Users = () => {
             </NavLink>
 
             <NavLink 
-              to="/users" 
-              className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
+              to="/usuarios" 
+              className={({ isActive }) => isActive ? "nav-item-active" : "nav-item-active"}
             >
               Usuários
             </NavLink>

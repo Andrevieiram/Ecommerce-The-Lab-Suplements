@@ -1,6 +1,18 @@
+import { useNavigate } from 'react-router-dom'; 
 import './Home.css';
 
+
 const Home = () => {
+
+  const navigate = useNavigate(); 
+
+  
+
+  const goToUsers = () => {
+    navigate('/usuarios'); 
+  };
+
+
   return (
     <div className = "users-container">
       <header className="header-container">
@@ -13,9 +25,9 @@ const Home = () => {
           <img className="logo-left" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
       
           <div className="nav-items">
-            <button className="nav-item" onClick={() => ('/promoções')}>Promoções</button>
+            <button className="nav-item">Promoções</button>
             <button className="nav-item-active">Produtos</button>
-            <button className="nav-item">Usuários</button>
+            <button className="nav-item" onClick={goToUsers}>Usuários</button>
           </div>
 
           <button className="nav-item-logout">Logout</button>
