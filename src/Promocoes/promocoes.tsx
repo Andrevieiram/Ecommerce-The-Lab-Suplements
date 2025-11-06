@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'; 
-import './Home.css';
+import './promocoes.css';
 
 
 const Home = () => {
@@ -9,7 +9,7 @@ const Home = () => {
   
 
   const goToUsers = () => {
-    navigate('/usuarios'); 
+    navigate('/promocoes'); 
   };
 
 
@@ -35,33 +35,42 @@ const Home = () => {
 
       <main className="main-products">
         <div className="main-title">
-            <h1>Gerenciamento de Produtos</h1>
-            <button className="productAdd-button">Adicionar Novo Produto</button>
+            <h1>Gerenciamento de Produtos em Promoção</h1>
+            <button className="productAdd-button">Adicionar Nova Promoção</button>
           
         </div>
 
         <div id="products-table-container">
           <table id='lista-produtos'>
+            <thead>
               <tr>
               <th>Nome</th>
               <th>Categoria</th>
               <th>Estoque</th>
-              <th>Preço</th>
+              <th>Novo Preço</th>
+              <th>Promoção aplicada</th>
               <th>Status</th>
               </tr>
+            </thead>
+            <tbody>
               <tr>
                 <td>Whey Protein Isolado 1kg</td>	
                 <td>Suplementos</td>	
                 <td>150 un.</td>	
-                <td>R$ 129.90</td>	
+                <td>R$ 103.92</td>	
+                <td> 20% </td>
                 <td>Ativo</td>
               </tr>
-              <td>Creatina Pura 300g</td>	
+              <tr>
+                <td>Creatina Pura 300g</td>	
                 <td>Suplementos</td>	
                 <td>150 un.</td>	
-                <td>R$ 45.99</td>	
+                <td>R$ 39.10</td>	
+                <td> 15% </td>
                 <td>Ativo</td>
-            </table>
+              </tr>
+            </tbody>
+          </table>
                       
         </div>
             
