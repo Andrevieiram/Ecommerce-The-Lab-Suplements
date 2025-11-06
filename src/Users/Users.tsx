@@ -59,6 +59,13 @@ const Users = () => {
           <div className="nav-items">
             
             <NavLink 
+              to="/" 
+              className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
+            >
+              Dashboard
+            </NavLink>
+
+            <NavLink 
               to="/produtos" 
               className={({ isActive }) => isActive ? "nav-item" : "nav-item"}
             >
@@ -66,8 +73,8 @@ const Users = () => {
             </NavLink>
             
             <NavLink 
-              to="/" 
-              className={({ isActive }) => isActive ? "nav-item" : "nav-item"}
+              to="/users" 
+              className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
             >
               Promoções
             </NavLink>
