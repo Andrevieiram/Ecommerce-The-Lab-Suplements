@@ -109,10 +109,9 @@
   position: relative;
   color: #333;
 
-  /* === ADICIONADO === */
-  max-height: 90vh; /* Define uma altura máxima (90% da altura da tela) */
-  overflow-y: auto;   /* Adiciona scroll vertical se o conteúdo transbordar */
-  /* === FIM DA ADIÇÃO === */
+
+  max-height: 90vh; 
+  overflow-y: auto;   
 }
 
 .modal-close-button {

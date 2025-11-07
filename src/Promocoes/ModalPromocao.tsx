@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './ModalPromocao.css';
 import { savePromocoes, getPromocoes } from './StoragePromocoes.tsx';
-// Importa o getProducts do diretório de Produtos
 import { getProducts } from '../Produtos/StorageProducts.tsx';
 
 interface Promocao {
@@ -16,13 +15,12 @@ interface Promocao {
   status: 'Ativa' | 'Inativa';
 }
 
-// Interface local para os produtos (baseado em ModalProduto.tsx)
 interface Product {
   id: string;
   name: string;
   category: string;
-  price: string; // ex: "R$ 10,00"
-  stock: string; // ex: "100 un."
+  price: string; 
+  stock: string; 
   status: 'Ativo' | 'Inativo';
 }
 
@@ -51,19 +49,16 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
   const [status, setStatus] = useState<'Ativa' | 'Inativa'>('Ativa');
   const [errors, setErrors] = useState<FormErrors>({});
 
-  // Novos estados para a lista de produtos
+ 
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProductId, setSelectedProductId] = useState('');
 
-  // Carrega os produtos quando o modal é aberto
   useEffect(() => {
     if (isOpen) {
       const storedProducts = getProducts<Product[]>('products') || [];
-      // Filtra para mostrar apenas produtos ativos no dropdown
       setProducts(storedProducts.filter(p => p.status === 'Ativo'));
     }
-    // O BLOCO 'ELSE' QUE CAUSAVA O LOOP FOI REMOVIDO DAQUI
-    // A função resetFields() não deve ser chamada aqui
+
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -88,10 +83,10 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
     setDiscount('');
     setStatus('Ativa');
     setErrors({});
-    setSelectedProductId(''); // Reseta o produto selecionado
+    setSelectedProductId(''); 
   };
 
-  // Função para lidar com a mudança do <select> de produto
+
   const handleProductChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const productId = e.target.value;
     setSelectedProductId(productId);
@@ -99,28 +94,24 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
     if (productId) {
       const selectedProduct = products.find(p => p.id === productId);
       if (selectedProduct) {
-        // Auto-preenche os campos
+
         setName(selectedProduct.name);
         setCategory(selectedProduct.category);
         
-        // Extrai o valor numérico do preço (ex: "R$ 10,00" -> "10.00")
         const parsedPrice = selectedProduct.price
           .replace('R$', '')
           .trim()
-          .replace('.', '') // Remove milhar
+          .replace('.', '') 
           .replace(',', '.');
         setPrice(parsedPrice);
 
-        // Extrai o valor numérico do estoque (ex: "100 un." -> "100")
         const parsedStock = parseInt(selectedProduct.stock, 10);
         setStock(isNaN(parsedStock) ? '' : parsedStock.toString());
         
-        // Unidade (unit) não existe no Produto, deve ser preenchido manualmente
         setUnit(''); 
-        setErrors({}); // Limpa erros
+        setErrors({}); 
       }
     } else {
-      // Se "Selecione..." for escolhido, limpa os campos relacionados
       setName('');
       setCategory('');
       setPrice('');
@@ -173,7 +164,7 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
     onPromocaoAdded(newPromocao);
 
     alert('Promoção cadastrada com sucesso!');
-    resetFields(); // O reset é chamado aqui, após o sucesso
+    resetFields(); 
     onClose();
   };
 
@@ -187,8 +178,7 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
         <h2>Cadastrar Nova Promoção</h2>
 
         <form className="modal-form" onSubmit={handleSubmit}>
-          
-          {/* CAMPO NOME TROCADO POR PRODUTO */}
+
           <div className="form-group">
             <label htmlFor="product">Produto:</label>
             <select
@@ -204,7 +194,6 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
                 </option>
               ))}
             </select>
-            {/* O erro de 'name' é usado aqui, pois o 'name' é obrigatório e preenchido por este campo */}
             {errors.name && <span className="error-message">{errors.name}</span>}
           </div>
 
