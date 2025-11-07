@@ -1,9 +1,9 @@
 import { useNavigate, NavLink } from 'react-router-dom'; 
 import './Promocoes.css';
-import { getPromocoes, savePromocoes } from './StoragePromocoes.tsx'; 
+import { getPromocoes } from './StoragePromocoes.tsx';
+import { getProducts } from '../Produtos/StorageProducts.tsx';
 import ModalPromocao from './ModalPromocao.tsx'; 
 import { useState, useEffect } from 'react';
-
 
 interface Promocao {
   id: string; 
@@ -19,7 +19,7 @@ const Promocoes = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const loadPromocoes = () => {
-    const storedPromocoes = getPromocoes<Promocao[]>('promocoes') || []; 
+    const storedPromocoes = getProducts<Promocao[]>('promocoes') || []; 
     setPromocoes(storedPromocoes);
   };
   
