@@ -5,14 +5,21 @@ import { savePromocoes, getPromocoes } from './StoragePromocoes.tsx';
 interface Promocao {
   id: string;
   name: string;
-  description: string;
+  category: string;
+  stock: string;
+  unit: string;
+  price: string;
   discount: string;
+  newPrice?: string;
   status: 'Ativa' | 'Inativa';
 }
 
 interface FormErrors {
   name?: string;
-  description?: string;
+  category?: string;
+  stock?: string;
+  unit?: string;
+  price?: string;
   discount?: string;
 }
 
@@ -24,8 +31,11 @@ type ModalProps = {
 
 const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
   const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [discount, setDiscount] = useState<number | string>('');
+  const [category, setCategory] = useState('');
+  const [stock, setStock] = useState('');
+  const [unit, setUnit] = useState('');
+  const [price, setPrice] = useState('');
+  const [discount, setDiscount] = useState('');
   const [status, setStatus] = useState<'Ativa' | 'Inativa'>('Ativa');
   const [errors, setErrors] = useState<FormErrors>({});
 
@@ -33,18 +43,21 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
 
   const validateForm = (): FormErrors => {
     const newErrors: FormErrors = {};
-    const discountValue = typeof discount === 'string' ? parseFloat(discount.replace(',', '.')) : discount as number;
-
     if (!name.trim()) newErrors.name = "Nome da promoção é obrigatório.";
-    if (!description.trim()) newErrors.description = "Descrição é obrigatória.";
-    if (!discountValue || isNaN(discountValue) || discountValue <= 0) newErrors.discount = "Desconto deve ser maior que zero.";
-
+    if (!category.trim()) newErrors.category = "Categoria é obrigatória.";
+    if (!stock.trim() || isNaN(Number(stock)) || Number(stock) < 0) newErrors.stock = "Estoque inválido.";
+    if (!unit.trim()) newErrors.unit = "Unidade é obrigatória.";
+    if (!price.trim() || isNaN(Number(price)) || Number(price) <= 0) newErrors.price = "Preço inválido.";
+    if (!discount.trim() || isNaN(Number(discount)) || Number(discount) <= 0) newErrors.discount = "Desconto deve ser maior que zero.";
     return newErrors;
   };
 
   const resetFields = () => {
     setName('');
-    setDescription('');
+    setCategory('');
+    setStock('');
+    setUnit('');
+    setPrice('');
     setDiscount('');
     setStatus('Ativa');
     setErrors({});
@@ -59,7 +72,15 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
       return;
     }
 
-    const discountValue = typeof discount === 'string' ? parseFloat(discount.replace(',', '.')) : discount as number;
+    const discountValue = parseFloat(discount.replace(',', '.'));
+    const priceValue = parseFloat(price.replace(',', '.'));
+
+    const formattedPrice = `R$ ${priceValue.toFixed(2).replace('.', ',')}`;
+    const newPriceValue = priceValue - (priceValue * discountValue / 100);
+    const formattedNewPrice = `R$ ${newPriceValue.toFixed(2).replace('.', ',')}`;
+
+    const finalDiscountString = `${discountValue.toFixed(2).replace('.', ',')}%`;
+
     const existingPromocoes = getPromocoes<Promocao[]>('promocoes') || [];
 
     let maxId = 0;
@@ -69,13 +90,15 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
     }
     const newId = maxId + 1;
 
-    const finalDiscountString = `${discountValue.toFixed(2).replace('.', ',')}%`;
-
     const newPromocao: Promocao = {
       id: `#${newId.toString().padStart(4, '0')}`,
       name,
-      description,
+      category,
+      stock,
+      unit,
+      price: formattedPrice,
       discount: finalDiscountString,
+      newPrice: formattedNewPrice,
       status,
     };
 
@@ -111,15 +134,54 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="description">Descrição:</label>
+            <label htmlFor="category">Categoria:</label>
             <input
               type="text"
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              style={{ borderColor: errors.description ? '#e63946' : '#ccc' }}
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              style={{ borderColor: errors.category ? '#e63946' : '#ccc' }}
             />
-            {errors.description && <span className="error-message">{errors.description}</span>}
+            {errors.category && <span className="error-message">{errors.category}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="stock">Estoque:</label>
+            <input
+              type="number"
+              id="stock"
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+              min="0"
+              style={{ borderColor: errors.stock ? '#e63946' : '#ccc' }}
+            />
+            {errors.stock && <span className="error-message">{errors.stock}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="unit">Unidade:</label>
+            <input
+              type="text"
+              id="unit"
+              value={unit}
+              onChange={(e) => setUnit(e.target.value)}
+              style={{ borderColor: errors.unit ? '#e63946' : '#ccc' }}
+            />
+            {errors.unit && <span className="error-message">{errors.unit}</span>}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="price">Preço (R$):</label>
+            <input
+              type="number"
+              id="price"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              step="0.01"
+              min="0"
+              style={{ borderColor: errors.price ? '#e63946' : '#ccc' }}
+            />
+            {errors.price && <span className="error-message">{errors.price}</span>}
           </div>
 
           <div className="form-group">
