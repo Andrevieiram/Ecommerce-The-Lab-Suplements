@@ -61,27 +61,11 @@ const Users = () => {
       <nav className="leftNav-container">
           <img className="logo-left" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
           <div className="nav-items">
-  <NavLink 
-    to="/produtos" 
-    className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
-  >
-    Produtos
-  </NavLink>
-
-  <NavLink 
-    to="/promocoes" 
-    className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
-  >
-    Promoções
-  </NavLink>
-
-  <NavLink 
-    to="/users" 
-    className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}
-  >
-    Usuários
-  </NavLink>
-</div>
+            <NavLink to="/produtos" className={() => "nav-item"}>Produtos</NavLink>
+            <NavLink to="/promocoes" className={() => "nav-item"}>Promoções</NavLink>
+            <NavLink to="/usuarios" className={() => "nav-item-active"}>Usuários</NavLink>
+          </div>
+  
           <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
       </nav>
 

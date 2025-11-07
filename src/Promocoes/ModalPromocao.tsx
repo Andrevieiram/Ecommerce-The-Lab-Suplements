@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ModalPromocao.css';
 import { savePromocoes, getPromocoes } from './StoragePromocoes.tsx';
+// Importa o getProducts do diretório de Produtos
+import { getProducts } from '../Produtos/StorageProducts.tsx';
 
 interface Promocao {
   id: string;
@@ -12,6 +14,16 @@ interface Promocao {
   discount: string;
   newPrice?: string;
   status: 'Ativa' | 'Inativa';
+}
+
+// Interface local para os produtos (baseado em ModalProduto.tsx)
+interface Product {
+  id: string;
+  name: string;
+  category: string;
+  price: string; // ex: "R$ 10,00"
+  stock: string; // ex: "100 un."
+  status: 'Ativo' | 'Inativo';
 }
 
 interface FormErrors {
@@ -39,11 +51,26 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
   const [status, setStatus] = useState<'Ativa' | 'Inativa'>('Ativa');
   const [errors, setErrors] = useState<FormErrors>({});
 
+  // Novos estados para a lista de produtos
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState('');
+
+  // Carrega os produtos quando o modal é aberto
+  useEffect(() => {
+    if (isOpen) {
+      const storedProducts = getProducts<Product[]>('products') || [];
+      // Filtra para mostrar apenas produtos ativos no dropdown
+      setProducts(storedProducts.filter(p => p.status === 'Ativo'));
+    }
+    // O BLOCO 'ELSE' QUE CAUSAVA O LOOP FOI REMOVIDO DAQUI
+    // A função resetFields() não deve ser chamada aqui
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const validateForm = (): FormErrors => {
     const newErrors: FormErrors = {};
-    if (!name.trim()) newErrors.name = "Nome da promoção é obrigatório.";
+    if (!name.trim()) newErrors.name = "Nome (preenchido a partir do produto) é obrigatório.";
     if (!category.trim()) newErrors.category = "Categoria é obrigatória.";
     if (!stock.trim() || isNaN(Number(stock)) || Number(stock) < 0) newErrors.stock = "Estoque inválido.";
     if (!unit.trim()) newErrors.unit = "Unidade é obrigatória.";
@@ -61,6 +88,45 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
     setDiscount('');
     setStatus('Ativa');
     setErrors({});
+    setSelectedProductId(''); // Reseta o produto selecionado
+  };
+
+  // Função para lidar com a mudança do <select> de produto
+  const handleProductChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const productId = e.target.value;
+    setSelectedProductId(productId);
+
+    if (productId) {
+      const selectedProduct = products.find(p => p.id === productId);
+      if (selectedProduct) {
+        // Auto-preenche os campos
+        setName(selectedProduct.name);
+        setCategory(selectedProduct.category);
+        
+        // Extrai o valor numérico do preço (ex: "R$ 10,00" -> "10.00")
+        const parsedPrice = selectedProduct.price
+          .replace('R$', '')
+          .trim()
+          .replace('.', '') // Remove milhar
+          .replace(',', '.');
+        setPrice(parsedPrice);
+
+        // Extrai o valor numérico do estoque (ex: "100 un." -> "100")
+        const parsedStock = parseInt(selectedProduct.stock, 10);
+        setStock(isNaN(parsedStock) ? '' : parsedStock.toString());
+        
+        // Unidade (unit) não existe no Produto, deve ser preenchido manualmente
+        setUnit(''); 
+        setErrors({}); // Limpa erros
+      }
+    } else {
+      // Se "Selecione..." for escolhido, limpa os campos relacionados
+      setName('');
+      setCategory('');
+      setPrice('');
+      setStock('');
+      setUnit('');
+    }
   };
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -107,7 +173,7 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
     onPromocaoAdded(newPromocao);
 
     alert('Promoção cadastrada com sucesso!');
-    resetFields();
+    resetFields(); // O reset é chamado aqui, após o sucesso
     onClose();
   };
 
@@ -121,15 +187,24 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
         <h2>Cadastrar Nova Promoção</h2>
 
         <form className="modal-form" onSubmit={handleSubmit}>
+          
+          {/* CAMPO NOME TROCADO POR PRODUTO */}
           <div className="form-group">
-            <label htmlFor="name">Nome:</label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+            <label htmlFor="product">Produto:</label>
+            <select
+              id="product"
+              value={selectedProductId}
+              onChange={handleProductChange}
               style={{ borderColor: errors.name ? '#e63946' : '#ccc' }}
-            />
+            >
+              <option value="">Selecione um produto...</option>
+              {products.map(product => (
+                <option key={product.id} value={product.id}>
+                  {product.name}
+                </option>
+              ))}
+            </select>
+            {/* O erro de 'name' é usado aqui, pois o 'name' é obrigatório e preenchido por este campo */}
             {errors.name && <span className="error-message">{errors.name}</span>}
           </div>
 
@@ -146,7 +221,7 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="stock">Estoque:</label>
+            <label htmlFor="stock">Estoque (da promoção):</label>
             <input
               type="number"
               id="stock"
@@ -165,13 +240,14 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
               id="unit"
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
+              placeholder='ex: un, kg, pct'
               style={{ borderColor: errors.unit ? '#e63946' : '#ccc' }}
             />
             {errors.unit && <span className="error-message">{errors.unit}</span>}
           </div>
 
           <div className="form-group">
-            <label htmlFor="price">Preço (R$):</label>
+            <label htmlFor="price">Preço Original (R$):</label>
             <input
               type="number"
               id="price"

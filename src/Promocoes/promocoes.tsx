@@ -1,5 +1,6 @@
 import { useNavigate, NavLink } from 'react-router-dom';
 import './Promocoes.css';
+// A importação de StorageProducts não é usada aqui, removi
 import { getPromocoes, savePromocoes } from './StoragePromocoes.tsx'; 
 import ModalPromocao from './ModalPromocao.tsx'; 
 import { useState, useEffect } from 'react';
@@ -27,15 +28,15 @@ const Promocoes = () => {
     setPromocoes(storedPromocoes);
   };
   
+  // === FUNÇÃO DELETE ATUALIZADA ===
+  // Agora remove de verdade, igual ao de Produtos
   const handleDelete = (idToDelete: string) => {
-  setPromocoes((prevPromocoes: Promocao[]) => {
-    return prevPromocoes.map((p: Promocao) =>
-      p.id === idToDelete
-        ? { ...p, discount: '', newPrice: '', status: 'Inativa' }
-        : p
-    );
-  });
-};
+    if (window.confirm("Tem certeza que deseja remover esta promoção?")) {
+      const updatedPromocoes = promocoes.filter((promo: Promocao) => promo.id !== idToDelete);
+      setPromocoes(updatedPromocoes);
+      savePromocoes('promocoes', updatedPromocoes); // Salva a lista atualizada no localStorage
+    }
+  };
 
   
   const handleLogout = () => {
@@ -52,8 +53,18 @@ const Promocoes = () => {
     const isAuthenticated = localStorage.getItem('isAuthenticated');
     if (!isAuthenticated) {
       navigate('/');
+      return; // Adicionado return para parar a execução
     }
+    
+    loadPromocoes(); // === CORREÇÃO ESTÁ AQUI ===
+
   }, [navigate]);
+
+  // === FUNÇÃO CORRIGIDA ===
+  // Corrigido a função que estava quebrada
+  const handlePromocaoAdded = (newPromocao: Promocao) => {
+    setPromocoes(prev => [...prev, newPromocao]);
+  };
 
   return (
     <div className="promocoes-container">
@@ -71,8 +82,8 @@ const Promocoes = () => {
         />
 
         <div className="nav-items">
-          <NavLink to="/promocoes" className={() => "nav-item-active"}>Promoções</NavLink>
           <NavLink to="/produtos" className={() => "nav-item"}>Produtos</NavLink>
+          <NavLink to="/promocoes" className={() => "nav-item-active"}>Promoções</NavLink>
           <NavLink to="/usuarios" className={() => "nav-item"}>Usuários</NavLink>
         </div>
 
@@ -117,6 +128,7 @@ const Promocoes = () => {
                     <td>{p.newPrice || '-'}</td>
                     <td>{p.status}</td>
                     <td>
+                      {/* O botão já existia, a lógica dele foi atualizada */}
                       <button
                         className="table-action-button-remove"
                         onClick={() => handleDelete(p.id)}
@@ -129,7 +141,7 @@ const Promocoes = () => {
               ) : (
                 <tr>
                   <td colSpan={10} className="table-empty">
-                    Nenhum produto encontrado.
+                    Nenhuma promoção cadastrada.
                   </td>
                 </tr>
               )}
