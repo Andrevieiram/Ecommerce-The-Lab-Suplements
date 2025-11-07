@@ -14,8 +14,10 @@
     width: 100%;
     z-index: 10;
     box-sizing: border-box;
+}
 
-    .avatar{
+
+.header-container .avatar{
     display: flex;
     align-items: center;
     justify-content: center;
@@ -26,24 +28,17 @@
     background-color: transparent;
     border: none;
     padding: 0;
-    }
-
-    .avatar img,
-    .avatar #picture{
-        height: 100%;
-        width: auto;
-        border-radius: 50%;
-        object-fit: cover;
-        display: block;
-        background-color: transparent;
-    }
-
 }
 
-
-
-
-
+.header-container .avatar img,
+.header-container .avatar #picture{
+    height: 100%;
+    width: auto;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    background-color: transparent;
+}
 
 .leftNav-container{
     display: flex;
@@ -53,97 +48,85 @@
     color: white;
     width: 18%;
     height: 100vh;
-
     border-top-right-radius: 15px;
     border-bottom-right-radius: 15px;
-
     position: fixed; 
     top: 0;         
     left: 0;         
     z-index: 20;     
+}
 
-    .logo-left{
-        width: 60%;
-        margin-top: 10px;
-        margin-bottom: 20px;
-    }
+.leftNav-container .logo-left{
+    width: 60%;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
 
-    .nav-items {
+.leftNav-container .nav-items {
     width: 80%; 
     display: flex;
     flex-direction: column;
     align-items: center;
     flex: 1; 
-    }
-
-    .nav-item{
-        width: 100%;
-        height: 40px;
-
-        background: transparent;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        border: 1px solid #262932;
-        margin-bottom: 10px;
-        border-radius: 10px;    
-    }
-
-    .nav-item-active{
-        width: 100%;
-        height: 40px;
-
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        margin-bottom: 10px;
-        background-color: #262932;
-        border-radius: 10px; 
-    }
-
-    .nav-item:hover{
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid white;
-    }
-
-    .nav-item-active:hover{
-        background: rgba(255, 255, 255, 0.2);
-        border: 1px solid white;
-    }
-
-
-    .nav-item-logout{
-        width: 80%; 
-
-        background-color: #8A00C5;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-
-        margin-bottom: 20%;
-    }
-
-    .nav-item-logout:hover{
-        background: #71079e;
-        border: 1px solid white;
-    }
-
 }
 
+.leftNav-container .nav-item{
+    width: 100%;
+    height: 40px;
+    background: transparent;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 1px solid #262932;
+    margin-bottom: 10px;
+    border-radius: 10px;    
+}
 
+.leftNav-container .nav-item-active{
+    width: 100%;
+    height: 40px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-bottom: 10px;
+    background-color: #262932;
+    border-radius: 10px; 
+}
 
+.leftNav-container .nav-item:hover{
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid white;
+}
 
-.main-products{
+.leftNav-container .nav-item-active:hover{
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid white;
+}
+
+.leftNav-container .nav-item-logout{
+    width: 80%; 
+    background-color: #8A00C5;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin-bottom: 20%;
+}
+
+.leftNav-container .nav-item-logout:hover{
+    background: #71079e;
+    border: 1px solid white;
+}
+
+.main-promocoes{
     position: absolute;
-    left: 17%;           
-    width: 83%;        
-    
+    left: 18%;           
+    width: 82%;        
     min-height: 0vh;
     padding: 0 20px 20px 20px; 
     color: #333;
@@ -167,12 +150,11 @@
     margin-bottom: 20px;   
 }
 
-.productAdd-button{
+.promocaoAdd-button{
     height: 40px;
     position: absolute;
     right: 0;
     bottom: 1;
-
     background-color: #8A00C5;
     color: white;
     border: none;
@@ -180,125 +162,68 @@
     cursor: pointer;
 }
 
-.productAdd-button:hover{
+.promocaoAdd-button:hover{
     background: #71079e;
 }
 
-
-.products-table-container{
+.promocoes-table-container{
     height: calc(85vh - 30px); 
     position: absolute;
     top: calc(15vh + 10px); 
     bottom: 0;
-<<<<<<<< HEAD:src/Produtos/Produtos.css
-    background-color: rgb(255, 255, 255);
-========
     left: 0;
     right: 0;
     background-color: rgb(221, 218, 218);
-    #lista-produtos{
-        width: 100%;
-        border-collapse: collapse;
-
-    }
-
-
-#lista-produtos {
-  width: 100%;
-  border-collapse: collapse; /* remove espaçamento entre células */
-  text-align: center; /* centraliza o conteúdo */
 }
 
-#lista-produtos th, 
-#lista-produtos td {
-  border: 1px solid #ccc;
-  padding: 10px;
-  vertical-align: middle;
-}
-
-#lista-produtos th {
-  background-color: #8A00C5;
-  color: white;
-  font-weight: bold;
-}
-
-#lista-produtos tr:nth-child(even) {
-  background-color: #f2f2f2;
-}
->>>>>>>> gabriel:src/Promocoes/promocoes.css
-    
-    left: 20px;
-    right: 20px;
-    width: auto; 
-   
+.promocoes-table {
+    width: 100%;
+    border-collapse: collapse; 
+    background-color: white;
     border-radius: 10px;
-
-    
-    overflow-y: auto; 
-    overflow-x: auto;
-    .products-table {
-        width: 100%;
-        border-collapse: collapse; 
-        background-color: white;
-        
-        
-        border-radius: 10px;
-        overflow: hidden; 
-    }
-     th,td {
-        padding: 12px 15px;
-        border: 1px solid #ddd;
-        text-align: left;
-        color: #333;
-    }
-    th {
-        background-color: #8A00C5; 
-        color: white;
-        font-weight: bold;
-    }
-    tbody tr:nth-of-type(even) {
-        background-color: #f9f9f9;
-    }
-    tbody tr:hover {
-        background-color: #f1f1f1; 
-    }
-    .table-empty {
-        text-align: center;
-        font-style: italic;
-        color: #888;
-        padding: 20px;
-    }
-    .table-action-button-remove {
-        background-color: #e63946; 
-        color: white;
-        border: none;
-        border-radius: 5px;
-        padding: 5px 10px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        transition: background-color 0.2s;
-    }
-    .table-action-button-remove:hover {
-        background-color: #d00000; 
-    }
-
+    overflow: hidden; 
 }
 
+.promocoes-table th,
+.promocoes-table td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+    color: #333;
+}
 
+.promocoes-table th {
+    background-color: #8A00C5; 
+    color: white;
+    font-weight: bold;
+}
 
+.promocoes-table tbody tr:nth-of-type(even) {
+    background-color: #f9f9f9;
+}
 
+.promocoes-table tbody tr:hover {
+    background-color: #f1f1f1; 
+}
 
- 
+.table-empty {
+    text-align: center;
+    font-style: italic;
+    color: #888;
+    padding: 20px;
+}
 
+.table-action-button-remove {
+    background-color: #e63946; 
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
 
-
-
-
-
-
-
-
-
-
-
-
+.table-action-button-remove:hover {
+    background-color: #d00000; 
+}

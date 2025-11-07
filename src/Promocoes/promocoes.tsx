@@ -1,101 +1,150 @@
-import { useNavigate } from 'react-router-dom'; 
-import './promocoes.css';
+import { useNavigate, NavLink } from 'react-router-dom';
+import './Promocoes.css';
+import { getPromocoes, savePromocoes } from './StoragePromocoes.tsx'; 
+import ModalPromocao from './ModalPromocao.tsx'; 
+import { useState, useEffect } from 'react';
 
 
-const Home = () => {
+interface Promocao {
+  id: string;
+  name: string;
+  category: string;
+  stock: string;
+  unit: string;
+  price: string;
+  discount?: string;
+  newPrice?: string;
+  status: 'Ativa' | 'Inativa';
+}
 
-  const navigate = useNavigate(); 
+const Promocoes = () => {
+  const navigate = useNavigate();
+  const [promocoes, setPromocoes] = useState<Promocao[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const loadPromocoes = () => {
+    const storedPromocoes = getPromocoes<Promocao[]>('promocoes') || []; 
+    setPromocoes(storedPromocoes);
+  };
+  
+  const handleDelete = (idToDelete: string) => {
+  setPromocoes((prevPromocoes: Promocao[]) => {
+    return prevPromocoes.map((p: Promocao) =>
+      p.id === idToDelete
+        ? { ...p, discount: '', newPrice: '', status: 'Inativa' }
+        : p
+    );
+  });
+};
 
   
-
-  const goToUsers = () => {
-    navigate('/promocoes'); 
-  };
-
-  const goToProducts = () => {
-    navigate('/produtos'); 
-  };
-
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
     navigate('/');
   };
 
+  
+  const abrirModal = () => setIsModalOpen(true);
+  const fecharModal = () => setIsModalOpen(false);
 
+
+  useEffect(() => {
+    const isAuthenticated = localStorage.getItem('isAuthenticated');
+    if (!isAuthenticated) {
+      navigate('/');
+    }
+  }, [navigate]);
 
   return (
-    <div className = "users-container">
+    <div className="promocoes-container">
       <header className="header-container">
         <button className="avatar">
-                <img id='picture' src='images\avatar.png'></img>
+          <img id='picture' src='images/avatar.png' alt="Avatar" />
         </button>
       </header>
 
       <nav className="leftNav-container">
-          <img className="logo-left" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
-      
-          <div className="nav-items">
-            <button className="nav-item" onClick={goToProducts}>Produtos</button>
-            <button className="nav-item-active">Promoções</button>
-            <button className="nav-item" onClick={goToUsers}>Usuários</button>
-          </div>
+        <img
+          className="logo-left"
+          src="images/WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png"
+          alt="The Lab Suplements"
+        />
 
-          <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
-      </nav>
-
-      <main className="main-products">
-        <div className="main-title">
-            <h1>Gerenciamento de Produtos em Promoção</h1>
-            <button className="productAdd-button">Adicionar Nova Promoção</button>
-          
+        <div className="nav-items">
+          <NavLink to="/promocoes" className={() => "nav-item-active"}>Promoções</NavLink>
+          <NavLink to="/produtos" className={() => "nav-item"}>Produtos</NavLink>
+          <NavLink to="/usuarios" className={() => "nav-item"}>Usuários</NavLink>
         </div>
 
-        <div id="products-table-container">
-          <table id='lista-produtos'>
+        <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
+      </nav>
+
+      <main className="main-promocoes">
+        <div className="main-title">
+          <h1>Gerenciamento de Promoções</h1>
+          <button className="promocaoAdd-button" onClick={abrirModal}>
+            Adicionar Nova Promoção
+          </button>
+        </div>
+
+        <div className="promocoes-table-container">
+          <table className="promocoes-table">
             <thead>
               <tr>
-              <th>Nome</th>
-              <th>Categoria</th>
-              <th>Estoque</th>
-              <th>Novo Preço</th>
-              <th>Promoção aplicada</th>
-              <th>Status</th>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Estoque</th>
+                <th>Unidade</th>
+                <th>Preço</th>
+                <th>Desconto</th>
+                <th>Novo Preço</th>
+                <th>Status</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>Whey Protein Isolado 1kg</td>	
-                <td>Suplementos</td>	
-                <td>150 un.</td>	
-                <td>R$ 103.92</td>	
-                <td> 20% </td>
-                <td>Ativo</td>
-              </tr>
-              <tr>
-                <td>Creatina Pura 300g</td>	
-                <td>Suplementos</td>	
-                <td>150 un.</td>	
-                <td>R$ 39.10</td>	
-                <td> 15% </td>
-                <td>Ativo</td>
-              </tr>
+              {promocoes.length > 0 ? (
+                promocoes.map((p: Promocao) => (
+                  <tr key={p.id}>
+                    <td>{p.id}</td>
+                    <td>{p.name}</td>
+                    <td>{p.category}</td>
+                    <td>{p.stock}</td>
+                    <td>{p.unit}</td>
+                    <td>{p.price}</td>
+                    <td>{p.discount || '-'}</td>
+                    <td>{p.newPrice || '-'}</td>
+                    <td>{p.status}</td>
+                    <td>
+                      <button
+                        className="table-action-button-remove"
+                        onClick={() => handleDelete(p.id)}
+                      >
+                        Remover
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={10} className="table-empty">
+                    Nenhum produto encontrado.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
-                      
         </div>
-            
-                    
-        
       </main>
 
-      
-      
+      <ModalPromocao
+        isOpen={isModalOpen}
+        onClose={fecharModal}
+        onPromocaoAdded={handlePromocaoAdded}
+      />
     </div>
-  )
-}
+  );
+};
 
-export default Home
-
-
-
-
+export default Promocoes;
