@@ -25,6 +25,7 @@ const Login = () => {
             })
         });
 
+        
         const data = await response.json();
 
         if (!response.ok) {
@@ -35,7 +36,7 @@ const Login = () => {
         // 1. Salva o token que veio do backend
         localStorage.setItem('token', data.token);
         
-        // 2. Mantém a sua lógica original de isAuthenticated (opcional, mas bom pra compatibilidade)
+        // 2. Mantém lógica original de isAuthenticated 
         localStorage.setItem('isAuthenticated', 'true');
 
         // 3. Redireciona para produtos

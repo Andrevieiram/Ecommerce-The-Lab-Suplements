@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Users.css';
-import ModalCadastro from './ModalCadastro'; // <--- 1. Importar o Modal
+import ModalCadastro from './ModalCadastro';
 
 interface User {
   _id: string;
@@ -13,13 +13,10 @@ interface User {
 const Users = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // 2. Estado para controlar se o modal está aberto
-  const [isModalOpen, setIsModalOpen] = useState(false); 
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const navigate = useNavigate();
 
-  // Função para buscar dados (usada no load e após cadastrar)
   const fetchUsers = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -33,7 +30,7 @@ const Users = () => {
         const data = await response.json();
         if(data.data) setUsers(data.data);
     } catch (error) {
-        console.error("Erro:", error);
+        console.error(error);
     } finally {
         setLoading(false);
     }
@@ -70,9 +67,18 @@ const Users = () => {
     }
   };
 
+  const handleEdit = (user: User) => {
+    setEditingUser(user);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenCreate = () => {
+    setEditingUser(null);
+    setIsModalOpen(true);
+  }
+
   return (
     <>
-      {/* HEADER E MENU LATERAL (Mantidos iguais) */}
       <header className="header-container">
         <div className="avatar">
             <img src="images/avatar.png" alt="Avatar" id="picture" />
@@ -98,12 +104,7 @@ const Users = () => {
       <div className="main-users">
         <div className="main-title">
             <h1>Gerenciamento de Usuários</h1>
-            
-            {/* 3. Botão agora abre o modal */}
-            <button 
-                className="userAdd-button" 
-                onClick={() => setIsModalOpen(true)} 
-            >
+            <button className="userAdd-button" onClick={handleOpenCreate}>
                 + Adicionar Usuário
             </button>
         </div>
@@ -129,7 +130,12 @@ const Users = () => {
                                     <td>{user.email}</td>
                                     <td>{user.cpf}</td>
                                     <td>
-                                        <button className="btn-edit">Editar</button>
+                                        <button 
+                                            className="btn-edit"
+                                            onClick={() => handleEdit(user)}
+                                        >
+                                            Editar
+                                        </button>
                                         <button 
                                             className="table-action-button-remove" 
                                             onClick={() => handleDelete(user._id)}
@@ -150,11 +156,11 @@ const Users = () => {
         </div>
       </div>
 
-      {/* 4. Renderizando o Modal */}
       <ModalCadastro 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onSuccess={fetchUsers} // Passamos a função de buscar para atualizar a lista ao criar
+        onSuccess={fetchUsers} 
+        userToEdit={editingUser}
       />
     </>
   );
