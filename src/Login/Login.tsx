@@ -13,7 +13,7 @@ const Login = () => {
     event.preventDefault();
 
     try {
-        // Chama a API do Backend
+      // Faz a requisição para o backend
         const response = await fetch('http://localhost:3000/api/users/login', {
             method: 'POST',
             headers: {
@@ -28,12 +28,10 @@ const Login = () => {
         const data = await response.json();
 
         if (!response.ok) {
-            // Se o backend der erro (ex: 401), mostramos a mensagem
             alert(data.message || "Erro ao fazer login");
             return;
         }
 
-        // SUCESSO:
         // 1. Salva o token que veio do backend
         localStorage.setItem('token', data.token);
         
