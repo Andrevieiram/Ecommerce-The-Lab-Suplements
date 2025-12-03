@@ -1,22 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './ModalPromocao.css';
-import { savePromocoes, getPromocoes } from './StoragePromocoes.tsx';
+import { API_BASE } from '../api';
 
-interface Promocao {
-  id: string;
+import type { Promocao } from './types/index';
+
+
+interface Product {
+  _id: string;
   name: string;
   category: string;
-  stock: string;
-  unit: string;
-  price: string;
-  discount: string;
-  newPrice?: string;
-  status: 'Ativa' | 'Inativa';
+  price: number; 
+  stock: number; 
+  status: boolean;
 }
 
 interface FormErrors {
-  name?: string;
-  category?: string;
+  productId?: string;
   stock?: string;
   unit?: string;
   price?: string;
@@ -30,189 +29,97 @@ type ModalProps = {
 };
 
 const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState('');
   const [stock, setStock] = useState('');
   const [unit, setUnit] = useState('');
-  const [price, setPrice] = useState('');
   const [discount, setDiscount] = useState('');
-  const [status, setStatus] = useState<'Ativa' | 'Inativa'>('Ativa');
   const [errors, setErrors] = useState<FormErrors>({});
+
+  useEffect(() => {
+    if (isOpen) {
+      fetch(`${API_BASE}/product`)
+        .then(res => res.json())
+        .then(data => setProducts(data.data))
+        .catch(err => console.error(err));
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const validateForm = (): FormErrors => {
-    const newErrors: FormErrors = {};
-    if (!name.trim()) newErrors.name = "Nome da promoção é obrigatório.";
-    if (!category.trim()) newErrors.category = "Categoria é obrigatória.";
-    if (!stock.trim() || isNaN(Number(stock)) || Number(stock) < 0) newErrors.stock = "Estoque inválido.";
-    if (!unit.trim()) newErrors.unit = "Unidade é obrigatória.";
-    if (!price.trim() || isNaN(Number(price)) || Number(price) <= 0) newErrors.price = "Preço inválido.";
-    if (!discount.trim() || isNaN(Number(discount)) || Number(discount) <= 0) newErrors.discount = "Desconto deve ser maior que zero.";
-    return newErrors;
-  };
-
-  const resetFields = () => {
-    setName('');
-    setCategory('');
-    setStock('');
-    setUnit('');
-    setPrice('');
-    setDiscount('');
-    setStatus('Ativa');
-    setErrors({});
-  };
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-
-    const validationErrors = validateForm();
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedProductId) {
+      setErrors({ productId: "Produto obrigatório" });
       return;
     }
 
-    const discountValue = parseFloat(discount.replace(',', '.'));
-    const priceValue = parseFloat(price.replace(',', '.'));
-
-    const formattedPrice = `R$ ${priceValue.toFixed(2).replace('.', ',')}`;
-    const newPriceValue = priceValue - (priceValue * discountValue / 100);
-    const formattedNewPrice = `R$ ${newPriceValue.toFixed(2).replace('.', ',')}`;
-
-    const finalDiscountString = `${discountValue.toFixed(2).replace('.', ',')}%`;
-
-    const existingPromocoes = getPromocoes<Promocao[]>('promocoes') || [];
-
-    let maxId = 0;
-    for (const promo of existingPromocoes) {
-      const idNum = parseInt(promo.id.replace('#', ''));
-      if (idNum > maxId) maxId = idNum;
+    const selectedProduct = products.find(p => p._id === selectedProductId);
+    if (!selectedProduct) {
+      alert("Produto não encontrado");
+      return;
     }
-    const newId = maxId + 1;
 
-    const newPromocao: Promocao = {
-      id: `#${newId.toString().padStart(4, '0')}`,
-      name,
-      category,
+    const priceValue = selectedProduct.price;
+    const discountValue = parseFloat(discount);
+    const newPriceValue = priceValue - (priceValue * discountValue / 100);
+
+    const promo: Promocao = {
+      productId: selectedProduct._id,
+      code: `PROMO-${Date.now()}`,
+      name: selectedProduct.name,
+      category: selectedProduct.category,
       stock,
       unit,
-      price: formattedPrice,
-      discount: finalDiscountString,
-      newPrice: formattedNewPrice,
-      status,
+      price: priceValue.toString(),
+      discount: discount,
+      newPrice: newPriceValue.toString(),
+      status: 'Ativa',
     };
 
-    const updatedPromocoes = [...existingPromocoes, newPromocao];
-    savePromocoes('promocoes', updatedPromocoes);
-    onPromocaoAdded(newPromocao);
-
-    alert('Promoção cadastrada com sucesso!');
-    resetFields();
-    onClose();
+    try {
+      const res = await fetch(`${API_BASE}/promotion/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(promo),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onPromocaoAdded(data.data);
+        onClose();
+        alert('Promoção cadastrada com sucesso!');
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao criar promoção');
+    }
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-button" onClick={onClose}>
-          &times;
-        </button>
-
+      <div className="modal-content" onClick={e => e.stopPropagation()}>
+        <button className="modal-close-button" onClick={onClose}>&times;</button>
         <h2>Cadastrar Nova Promoção</h2>
+        <form onSubmit={handleSubmit}>
+          <label>Produto:</label>
+          <select value={selectedProductId} onChange={e => setSelectedProductId(e.target.value)}>
+            <option value="">Selecione um produto</option>
+            {products.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+          </select>
+          {errors.productId && <span className="error">{errors.productId}</span>}
 
-        <form className="modal-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="name">Nome:</label>
-            <input
-              type="text"
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              style={{ borderColor: errors.name ? '#e63946' : '#ccc' }}
-            />
-            {errors.name && <span className="error-message">{errors.name}</span>}
-          </div>
+          <label>Estoque:</label>
+          <input type="number" value={stock} onChange={e => setStock(e.target.value)} />
 
-          <div className="form-group">
-            <label htmlFor="category">Categoria:</label>
-            <input
-              type="text"
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              style={{ borderColor: errors.category ? '#e63946' : '#ccc' }}
-            />
-            {errors.category && <span className="error-message">{errors.category}</span>}
-          </div>
+          <label>Unidade:</label>
+          <input type="text" value={unit} onChange={e => setUnit(e.target.value)} />
 
-          <div className="form-group">
-            <label htmlFor="stock">Estoque:</label>
-            <input
-              type="number"
-              id="stock"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              min="0"
-              style={{ borderColor: errors.stock ? '#e63946' : '#ccc' }}
-            />
-            {errors.stock && <span className="error-message">{errors.stock}</span>}
-          </div>
+          <label>Desconto (%):</label>
+          <input type="number" value={discount} onChange={e => setDiscount(e.target.value)} />
 
-          <div className="form-group">
-            <label htmlFor="unit">Unidade:</label>
-            <input
-              type="text"
-              id="unit"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              style={{ borderColor: errors.unit ? '#e63946' : '#ccc' }}
-            />
-            {errors.unit && <span className="error-message">{errors.unit}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="price">Preço (R$):</label>
-            <input
-              type="number"
-              id="price"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              step="0.01"
-              min="0"
-              style={{ borderColor: errors.price ? '#e63946' : '#ccc' }}
-            />
-            {errors.price && <span className="error-message">{errors.price}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="discount">Desconto (%):</label>
-            <input
-              type="number"
-              id="discount"
-              value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
-              step="0.01"
-              min="0"
-              style={{ borderColor: errors.discount ? '#e63946' : '#ccc' }}
-            />
-            {errors.discount && <span className="error-message">{errors.discount}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="status">Status:</label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as 'Ativa' | 'Inativa')}
-            >
-              <option value="Ativa">Ativa</option>
-              <option value="Inativa">Inativa</option>
-            </select>
-          </div>
-
-          <button type="submit" className="form-submit-button">
-            Cadastrar Promoção
-          </button>
+          <button type="submit">Cadastrar Promoção</button>
         </form>
       </div>
     </div>
