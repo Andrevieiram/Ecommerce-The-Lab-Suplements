@@ -1,30 +1,85 @@
+import { useState } from 'react'; // Importamos o useState para guardar o que o usuário digita
 import './Login.css';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
   const navigate = useNavigate();
 
-  const handleLogin = (event: React.FormEvent) => {
+  // Estados para armazenar email e senha
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
-    localStorage.setItem('isAuthenticated', 'true');
-    navigate('/produtos');
+
+    try {
+        // Chama a API do Backend
+        const response = await fetch('http://localhost:3000/api/users/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            // Se o backend der erro (ex: 401), mostramos a mensagem
+            alert(data.message || "Erro ao fazer login");
+            return;
+        }
+
+        // SUCESSO:
+        // 1. Salva o token que veio do backend
+        localStorage.setItem('token', data.token);
+        
+        // 2. Mantém a sua lógica original de isAuthenticated (opcional, mas bom pra compatibilidade)
+        localStorage.setItem('isAuthenticated', 'true');
+
+        // 3. Redireciona para produtos
+        navigate('/produtos');
+
+    } catch (error) {
+        console.error("Erro de conexão:", error);
+        alert("Não foi possível conectar ao servidor.");
+    }
   };
 
   return (
     <div id="background-container">
-      <div className="logo-left-login"><img src='images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png'></img></div>
+      <div className="logo-left-login">
+        <img src='images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png' alt="Logo" />
+      </div>
 
       <div id="login-container">
         <h2>Sign in</h2>
         <form onSubmit={handleLogin}>
           <div className="input-group">
-            <label htmlFor="username">User</label>
-            <input type="text" id="username" placeholder="Enter User" />
+            <label htmlFor="email">Email</label> 
+            <input 
+                type="email" 
+                id="email" 
+                placeholder="Enter Email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)} 
+                required 
+            />
           </div>
 
           <div className="input-group">
             <label htmlFor="password">Password</label>
-            <input type="password" id="password" placeholder="Enter Password" />
+            <input 
+                type="password" 
+                id="password" 
+                placeholder="Enter Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)} 
+                required 
+            />
           </div>
 
           <button type="submit">SIGN IN</button>
