@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
-import ModalProduto from './ModalProduto.tsx';
+import './Produtos.css'; 
+import ModalProduto from './ModalProduto'; 
 
 const Produtos = () => {
   
@@ -20,23 +21,30 @@ const Produtos = () => {
 
   const [products, setProducts] = useState<Product[]>([]); 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   
-  const fetchProducts= useCallback (async () => {
+  const fetchProducts = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (!token) {
         navigate('/');
         return;
     }
     try {
-        const response = await fetch('http://localhost:3000/api/produtos', {
+        const response = await fetch('http://localhost:3000/api/product', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
+        
+        if (!response.ok) {
+            throw new Error('Erro ao buscar produtos');
+        }
+
         const data = await response.json();
-        if(data.data) setProducts(data.data);
+        if(data.data) {
+            setProducts(data.data);
+        }
     } catch (error) {
-        console.error(error);
+        console.error("Erro no fetch:", error);
     } finally {
         setLoading(false);
     }
@@ -44,7 +52,7 @@ const Produtos = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, [navigate, fetchProducts]);
+  }, [fetchProducts]);
   
   const handleDelete = async (codeToDelete: string) => {
     if (!window.confirm("Tem certeza que deseja excluir esse produto?")) return;
@@ -52,7 +60,7 @@ const Produtos = () => {
     const token = getToken();
 
     try {
-        const response = await fetch(`http://localhost:3000/api/produtos/${codeToDelete}`, {
+        const response = await fetch(`http://localhost:3000/api/product/${codeToDelete}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -61,10 +69,11 @@ const Produtos = () => {
             alert("Produto excluído com sucesso!");
             setProducts(products.filter(product => product.code !== codeToDelete));
         } else {
-            alert("Erro ao excluir produto");
+            const data = await response.json();
+            alert(data.message || "Erro ao excluir produto");
         }
     } catch (error) {
-        alert("Erro de conexão:" + error);
+        alert("Erro de conexão: " + error);
     }
   };
 
@@ -78,40 +87,28 @@ const Produtos = () => {
     setIsModalOpen(true);
   }
   
-  
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated');
     localStorage.removeItem('token'); 
     navigate('/'); 
   };
 
-
-  useEffect(() => {
-    const token = getToken(); 
-    if (!token) {
-        navigate('/'); 
-        return; 
-    }
-    fetchProducts();
-  }, [navigate, fetchProducts]);
-
   return (
-    <div className = "products-container">
+    <div className="products-container">
       <header className="header-container">
-        <button className="avatar">
-                <img id='picture' src='images\avatar.png'></img>
-        </button>
+        <div className="avatar">
+             <img id='picture' src='images/avatar.png' alt="Avatar" />
+        </div>
       </header>
       
       <nav className="leftNav-container">
-          <img className="logo-left" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
+          <img className="logo-left" src="images/WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
       
           <div className="nav-items">
             <NavLink to="/produtos" className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}>Produtos</NavLink>
             <NavLink to="/promocoes" className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}>Promoções</NavLink>
             <NavLink to="/usuarios" className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}>Usuários</NavLink>
           </div>
-
 
           <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
       </nav>
@@ -148,8 +145,8 @@ const Produtos = () => {
                                       <td>{product.name}</td>
                                       <td>{product.category}</td>
                                       <td>{product.stock}</td>
-                                      <td>{product.price}</td>
-                                      <td>{product.status === true ? "Ativo" : "Inativo"}</td>
+                                      <td>R$ {Number(product.price).toFixed(2)}</td>
+                                      <td>{product.status ? "Ativo" : "Inativo"}</td>
                                       <td>
                                           <button 
                                               className="btn-edit"
@@ -180,7 +177,7 @@ const Produtos = () => {
       <ModalProduto 
           isOpen={isModalOpen} 
           onClose={() => setIsModalOpen(false)} 
-          productToEdit={editingProduct}
+          productToEdit={editingProduct as any} 
           onSuccess={fetchProducts} 
       />
     </div>
@@ -188,4 +185,3 @@ const Produtos = () => {
 };
 
 export default Produtos;
-

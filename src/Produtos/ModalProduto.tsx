@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+import './ModalProduto.css'; 
 
 export interface newProduct {
     _id?: string; 
@@ -19,7 +19,6 @@ export interface FormErrors {
     stock?: string;
 }
 
-
 type ModalProps = {
     isOpen: boolean;
     onClose: () => void;
@@ -34,21 +33,24 @@ const ModalProduto = ({ isOpen, onClose, onSuccess, productToEdit }: ModalProps)
   const [price, setPrice] = useState<number | string>('');
   const [stock, setStock] = useState<number | string>('');
   const [errors, setErrors] = useState<FormErrors>({});
-  const [submissionError, ] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null); // Corrigido destructuring
 
   useEffect(() => {
     if (productToEdit) {
+        setCode(productToEdit.code); 
         setName(productToEdit.name);
         setCategory(productToEdit.category);
         setPrice(productToEdit.price);
         setStock(productToEdit.stock);
     } else {
+        setCode(''); 
         setName('');
         setCategory('');
         setPrice('');
         setStock('');
     }
     setErrors({});
+    setSubmissionError(null);
    }, [productToEdit, isOpen]); 
 
   if (!isOpen) {
@@ -58,41 +60,26 @@ const ModalProduto = ({ isOpen, onClose, onSuccess, productToEdit }: ModalProps)
   const validateForm = (): FormErrors => {
     const newErrors: FormErrors = {};
 
-    // Validação do código
     const codeString = typeof code === 'string' ? code.trim() : String(code).trim();
     const numberRegex = /^\d+$/;
 
     if (!codeString) {
       newErrors.code = "O código do produto é obrigatório.";
     } else if (!numberRegex.test(codeString)) {
-      newErrors.code = "O código deve conter apenas números (sem espaços ou caracteres especiais).";
-    } else if (parseInt(codeString, 10) <= 0) {
-      newErrors.code = "O código do produto deve ser um número positivo (maior que zero).";
+      newErrors.code = "O código deve conter apenas números.";
     }
 
-    if (!name.trim()) {
-      newErrors.name = "Nome do produto é obrigatório.";
-    }
+    if (!name.trim()) newErrors.name = "Nome do produto é obrigatório.";
+    if (!category.trim()) newErrors.category = "Categoria é obrigatória.";
 
-    if (!category.trim()) {
-      newErrors.category = "Categoria é obrigatória.";
-    }
+    const priceValue = Number(price);
+    if (isNaN(priceValue) || priceValue <= 0) newErrors.price = "Preço inválido.";
 
-    const priceValue = typeof price === 'number' ? price : parseFloat(String(price));
-    if (isNaN(priceValue) || priceValue <= 0) {
-      newErrors.price = "Preço deve ser um valor positivo maior que zero.";
-    }
-
-    const stockValue = typeof stock === 'number' ? stock : parseInt(String(stock), 10);
-    if (isNaN(stockValue) || stockValue < 0) {
-      newErrors.stock = "Estoque deve ser um número maior que zero.";
-    }
+    const stockValue = Number(stock);
+    if (isNaN(stockValue) || stockValue < 0) newErrors.stock = "Estoque inválido.";
 
     return newErrors;
   };
-
-
-
 
   const handleSubmit = async (event: React.FormEvent) => {
       event.preventDefault();
@@ -105,11 +92,11 @@ const ModalProduto = ({ isOpen, onClose, onSuccess, productToEdit }: ModalProps)
   
       const token = localStorage.getItem('token');
       
-      // Define se é POST (criar) ou PUT (editar)
       const method = productToEdit ? 'PUT' : 'POST';
+      
       const url = productToEdit 
-          ? `http://localhost:3000/api/produtos/${productToEdit.code}` 
-          : 'http://localhost:3000/api/produtos';
+          ? `http://localhost:3000/api/product/${productToEdit.code}` 
+          : 'http://localhost:3000/api/product';
   
       try {
           const response = await fetch(url, {
@@ -122,8 +109,8 @@ const ModalProduto = ({ isOpen, onClose, onSuccess, productToEdit }: ModalProps)
                   code,
                   name,
                   category,
-                  price,
-                  stock
+                  price: Number(price),
+                  stock: Number(stock)
               })
           });
   
@@ -138,29 +125,21 @@ const ModalProduto = ({ isOpen, onClose, onSuccess, productToEdit }: ModalProps)
           }
   
       } catch (error) {
-          alert("Erro de conexão." + error);
+          console.error("Erro fetch:", error);
+          alert("Erro de conexão com o servidor.");
       }
     };
 
-  
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          
-        <div className="modal-header">
-            <h2>Cadastrar Novo Produto (API)</h2>
-            <button className="modal-close-button" onClick={onClose}>
-                &times;
-            </button>
-        </div>
+        <button className="modal-close-button" onClick={onClose}>&times;</button>
 
         <h2>{productToEdit ? 'Editar Produto' : 'Cadastrar Novo Produto'}</h2>
 
         <form className="modal-form" onSubmit={handleSubmit}>
+            {submissionError && <div className="error-message">{submissionError}</div>}
             
-            {submissionError && (
-                 <div className="p-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium">{submissionError}</div>
-            )}
             <div className="form-group">
                 <label htmlFor="code">Código:</label>
                 <input
@@ -168,8 +147,8 @@ const ModalProduto = ({ isOpen, onClose, onSuccess, productToEdit }: ModalProps)
                     id="code"
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    // O estilo inline é mantido, mas você pode substituí-lo por uma classe no seu CSS
                     style={{ borderColor: errors.code ? '#e63946' : '#ccc' }} 
+                    disabled={!!productToEdit} 
                 />
                 {errors.code && <span className="error-message">{errors.code}</span>}
             </div>
@@ -185,6 +164,7 @@ const ModalProduto = ({ isOpen, onClose, onSuccess, productToEdit }: ModalProps)
                 />
                 {errors.name && <span className="error-message">{errors.name}</span>}
             </div>
+
             <div className="form-group">
                 <label htmlFor="category">Categoria:</label>
                 <input
@@ -196,6 +176,7 @@ const ModalProduto = ({ isOpen, onClose, onSuccess, productToEdit }: ModalProps)
                 />
                 {errors.category && <span className="error-message">{errors.category}</span>}
             </div>
+
             <div className="form-group-row"> 
                 <div className="form-group half-width">
                     <label htmlFor="price">Preço (R$):</label>
