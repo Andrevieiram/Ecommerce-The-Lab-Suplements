@@ -1,25 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import './ModalPromocao.css';
 import { API_BASE } from '../api';
-
 import type { Promocao } from './types/index';
-
 
 interface Product {
   _id: string;
   name: string;
   category: string;
-  price: number; 
-  stock: number; 
-  status: boolean;
-}
-
-interface FormErrors {
-  productId?: string;
-  stock?: string;
-  unit?: string;
-  price?: string;
-  discount?: string;
+  price: number;
+  stock: number;
 }
 
 type ModalProps = {
@@ -31,95 +20,130 @@ type ModalProps = {
 const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProductId, setSelectedProductId] = useState('');
-  const [stock, setStock] = useState('');
-  const [unit, setUnit] = useState('');
   const [discount, setDiscount] = useState('');
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      fetch(`${API_BASE}/product`)
+      setLoading(true);
+      fetch(`${API_BASE}/product/getall`)
         .then(res => res.json())
-        .then(data => setProducts(data.data))
-        .catch(err => console.error(err));
+        .then(data => {
+          const lista = Array.isArray(data.data) ? data.data : (Array.isArray(data) ? data : []);
+          setProducts(lista);
+        })
+        .catch(err => console.error("Erro ao buscar produtos:", err))
+        .finally(() => setLoading(false));
     }
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedProductId('');
+      setDiscount('');
+    }
+  }, [isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedProductId) {
-      setErrors({ productId: "Produto obrigatório" });
+
+    if (!selectedProductId || !discount) {
+      alert("Por favor, selecione um produto e defina o desconto.");
       return;
     }
 
-    const selectedProduct = products.find(p => p._id === selectedProductId);
-    if (!selectedProduct) {
-      alert("Produto não encontrado");
-      return;
-    }
-
-    const priceValue = selectedProduct.price;
-    const discountValue = parseFloat(discount);
-    const newPriceValue = priceValue - (priceValue * discountValue / 100);
-
-    const promo: Promocao = {
-      productId: selectedProduct._id,
-      code: `PROMO-${Date.now()}`,
-      name: selectedProduct.name,
-      category: selectedProduct.category,
-      stock,
-      unit,
-      price: priceValue.toString(),
-      discount: discount,
-      newPrice: newPriceValue.toString(),
-      status: 'Ativa',
+    const payload = {
+      productId: selectedProductId,
+      discount: Number(discount),
+      status: 'active'
     };
 
     try {
+      setLoading(true);
       const res = await fetch(`${API_BASE}/promotion/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(promo),
+        body: JSON.stringify(payload),
       });
+
       const data = await res.json();
+
       if (res.ok) {
-        onPromocaoAdded(data.data);
+        alert('Promoção criada com sucesso!');
+        onPromocaoAdded(data.data || data); 
         onClose();
-        alert('Promoção cadastrada com sucesso!');
       } else {
-        alert(data.message);
+        alert(data.message || 'Erro ao criar promoção');
       }
     } catch (err) {
       console.error(err);
-      alert('Erro ao criar promoção');
+      alert('Erro de conexão com o servidor');
+    } finally {
+      setLoading(false);
     }
   };
+
+  const selectedProductDetails = products.find(p => p._id === selectedProductId);
+  
+  const previewPrice = selectedProductDetails 
+    ? selectedProductDetails.price - (selectedProductDetails.price * (Number(discount) / 100))
+    : 0;
+
+  if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <button className="modal-close-button" onClick={onClose}>&times;</button>
-        <h2>Cadastrar Nova Promoção</h2>
+        
+        <h2>Nova Promoção</h2>
+        
         <form onSubmit={handleSubmit}>
-          <label>Produto:</label>
-          <select value={selectedProductId} onChange={e => setSelectedProductId(e.target.value)}>
-            <option value="">Selecione um produto</option>
-            {products.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
-          </select>
-          {errors.productId && <span className="error">{errors.productId}</span>}
+          {}
+          <div className="form-group">
+            <label>Selecione o Produto:</label>
+            <select 
+              value={selectedProductId} 
+              onChange={e => setSelectedProductId(e.target.value)}
+              disabled={loading}
+              className="modal-select"
+            >
+              <option value="">-- Escolha um produto --</option>
+              {products.map(p => (
+                <option key={p._id} value={p._id}>
+                  {p.name} (R$ {Number(p.price).toFixed(2)})
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <label>Estoque:</label>
-          <input type="number" value={stock} onChange={e => setStock(e.target.value)} />
+          {}
+          <div className="form-group">
+            <label>Desconto (%):</label>
+            <input 
+              type="number" 
+              min="1" 
+              max="100"
+              value={discount} 
+              onChange={e => setDiscount(e.target.value)}
+              placeholder="Ex: 10"
+              disabled={!selectedProductId}
+            />
+          </div>
 
-          <label>Unidade:</label>
-          <input type="text" value={unit} onChange={e => setUnit(e.target.value)} />
+          {}
+          {selectedProductDetails && discount && (
+            <div className="promotion-preview">
+              <p><strong>Preço Original:</strong> R$ {Number(selectedProductDetails.price).toFixed(2)}</p>
+              <p><strong>Preço com Desconto:</strong> <span style={{color: 'green', fontWeight: 'bold'}}>R$ {previewPrice.toFixed(2)}</span></p>
+            </div>
+          )}
 
-          <label>Desconto (%):</label>
-          <input type="number" value={discount} onChange={e => setDiscount(e.target.value)} />
-
-          <button type="submit">Cadastrar Promoção</button>
+          <div className="modal-actions">
+            <button type="submit" className="btn-save" disabled={loading}>
+              {loading ? 'Salvando...' : 'Confirmar Promoção'}
+            </button>
+          </div>
         </form>
       </div>
     </div>

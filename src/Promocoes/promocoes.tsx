@@ -1,40 +1,63 @@
 import { useNavigate, NavLink } from 'react-router-dom';
 import './Promocoes.css';
 import ModalPromocao from './ModalPromocao';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { API_BASE } from '../api';
-import type { Promocao } from './types/index';
-
+import type { Promocao, PromotionResponse } from './types/index'; 
 
 const Promocoes = () => {
   const navigate = useNavigate();
   const [promocoes, setPromocoes] = useState<Promocao[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false); 
 
-  const fetchPromocoes = async () => {
+  const fetchPromocoes = useCallback(async () => {
+    setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/promotion/getall`);
-      const data = await res.json();
-      setPromocoes(data.data);
+      const res = await fetch(`${API_BASE}/api/promotion/getall`);
+      
+      if (!res.ok) {
+        throw new Error(`Erro na rede: status ${res.status}`);
+      }
+
+      const responseData = await res.json() as PromotionResponse; 
+      
+      if (responseData.data && Array.isArray(responseData.data)) {
+        setPromocoes(responseData.data); 
+      } else {
+        setPromocoes([]);
+      }
+      
     } catch (err) {
-      console.error(err);
-      alert('Erro ao carregar promoções');
+      console.error("Erro ao carregar promoções:", err); 
+      alert('Erro ao carregar promoções. Verifique o console para detalhes.');
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
+
 
   const handleDelete = async (_id: string) => {
-    if (!window.confirm("Tem certeza que deseja remover esta promoção?")) return;
+    if (!window.confirm("Tem certeza que deseja remover esta promoção?")) return; 
 
     try {
-      const res = await fetch(`${API_BASE}/promotion/delete/${_id}`, {
+      const res = await fetch(`${API_BASE}/api/promotion/delete/${_id}`, {
         method: 'DELETE',
       });
-      const data = await res.json();
-      alert(data.message);
-      setPromocoes(prev => prev.filter(p => p._id !== _id));
+      
+      if (res.ok) {
+        const contentType = res.headers.get("content-type");
+        const data = contentType && contentType.includes("application/json") ? await res.json() : { message: 'Promoção removida.' };
+
+        alert(data.message || 'Promoção removida com sucesso');
+        setPromocoes(prev => prev.filter(p => p._id !== _id));
+      } else {
+         const errorData = await res.json();
+         alert(errorData.message || 'Erro ao deletar');
+      }
     } catch (err) {
       console.error(err);
-      alert('Erro ao deletar a promoção');
+      alert('Erro de conexão ao deletar a promoção');
     }
   };
 
@@ -43,11 +66,8 @@ const Promocoes = () => {
     navigate('/');
   };
 
-  const abrirModal = () => setIsModalOpen(true);
-  const fecharModal = () => setIsModalOpen(false);
-
-  const handlePromocaoAdded = (newPromocao: Promocao) => {
-    setPromocoes(prev => [...prev, newPromocao]);
+  const handlePromocaoAdded = () => {
+    fetchPromocoes(); 
   };
 
   useEffect(() => {
@@ -57,7 +77,7 @@ const Promocoes = () => {
       return;
     }
     fetchPromocoes();
-  }, [navigate]);
+  }, [navigate, fetchPromocoes]);
 
   return (
     <div className="promocoes-container">
@@ -74,9 +94,9 @@ const Promocoes = () => {
           alt="The Lab Suplements"
         />
         <div className="nav-items">
-          <NavLink to="/produtos" className={() => "nav-item"}>Produtos</NavLink>
-          <NavLink to="/promocoes" className={() => "nav-item-active"}>Promoções</NavLink>
-          <NavLink to="/usuarios" className={() => "nav-item"}>Usuários</NavLink>
+          <NavLink to="/produtos" className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}>Produtos</NavLink>
+          <NavLink to="/promocoes" className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}>Promoções</NavLink>
+          <NavLink to="/usuarios" className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}>Usuários</NavLink>
         </div>
         <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
       </nav>
@@ -84,69 +104,83 @@ const Promocoes = () => {
       <main className="main-promocoes">
         <div className="main-title">
           <h1>Gerenciamento de Promoções</h1>
-          <button className="promocaoAdd-button" onClick={abrirModal}>
+          <button className="promocaoAdd-button" onClick={() => setIsModalOpen(true)}>
             Adicionar Nova Promoção
           </button>
         </div>
 
         <div className="promocoes-table-container">
-          <table className="promocoes-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Produto</th>
-                <th>Nome</th>
-                <th>Categoria</th>
-                <th>Estoque</th>
-                <th>Unidade</th>
-                <th>Preço</th>
-                <th>Desconto</th>
-                <th>Novo Preço</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {promocoes.length > 0 ? (
-                promocoes.map((p: Promocao) => (
-                  <tr key={p._id}>
-                    <td>{p._id}</td>
-                    <td>{p.productId}</td>
-                    <td>{p.name}</td>
-                    <td>{p.category}</td>
-                    <td>{p.stock}</td>
-                    <td>{p.unit}</td>
-                    <td>{p.price}</td>
-                    <td>{p.discount || '-'}</td>
-                    <td>{p.newPrice || '-'}</td>
-                    <td>{p.status}</td>
-                    <td>
-                      <button
-                        className="table-action-button-remove"
-                        onClick={() => handleDelete(p._id!)}
-                      >
-                        Remover
-                      </button>
+          {isLoading ? (
+            <p style={{ textAlign: 'center', padding: '20px' }}>Carregando promoções...</p>
+          ) : (
+            <table className="promocoes-table">
+              <thead>
+                <tr>
+                  <th>Produto</th>
+                  <th>Categoria</th>
+                  <th>Estoque</th>
+                  <th>Preço Original</th>
+                  <th>Desconto (%)</th>
+                  <th>Novo Preço</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {promocoes.length > 0 ? (
+                  promocoes.map((p) => {
+                    const product = p.product;
+                    const isProductValid = product && product.name && product.price;
+
+                    if (!isProductValid) {
+                        return (
+                            <tr key={p._id} className="table-error-row">
+                                <td colSpan={8}>
+                                    Erro: Produto associado à promoção (ID: {p.product?._id || 'N/A'}) não encontrado ou inválido.
+                                </td>
+                            </tr>
+                        );
+                    }
+
+                    return (
+                      <tr key={p._id}>
+                        <td>{product.name}</td> 
+                        <td>{product.category}</td>
+                        <td>{product.stock}</td>
+                        <td>R$ {Number(product.price).toFixed(2)}</td>
+                        <td>{p.discount ? `${p.discount}%` : '-'}</td>
+                        <td style={{ fontWeight: 'bold', color: '#2ecc71' }}>
+                          {p.newPrice ? `R$ ${Number(p.newPrice).toFixed(2)}` : '-'}
+                        </td>
+                        <td>{p.status}</td>
+                        <td>
+                          <button
+                            className="table-action-button-remove"
+                            onClick={() => p._id && handleDelete(p._id)}
+                          >
+                            Remover
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={8} className="table-empty">
+                      Nenhuma promoção cadastrada.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={11} className="table-empty">
-                    Nenhuma promoção cadastrada.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </main>
 
       <ModalPromocao
         isOpen={isModalOpen}
-        onClose={fecharModal}
+        onClose={() => setIsModalOpen(false)}
         onPromocaoAdded={handlePromocaoAdded}
-
       />
     </div>
   );
