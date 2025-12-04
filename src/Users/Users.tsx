@@ -1,127 +1,169 @@
-import { useState, useEffect } from 'react';
-import "./Users.css";
-import ModalCadastro from './ModalCadastro';
-import { getFromLocalStorage, saveToLocalStorage } from './StorageUsers';
-import { NavLink } from 'react-router-dom';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './Users.css';
+import ModalCadastro from './ModalCadastro';
 
 interface User {
-  id: string;
+  _id: string;
   name: string;
-  cpf: string;
   email: string;
+  cpf: string;
 }
 
 const Users = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const navigate = useNavigate();
 
-  const loadUsers = () => {
-    const storedUsers = getFromLocalStorage<User[]>('users') || [];
-    setUsers(storedUsers);
-  };
-
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
-  const abrirModal = () => {
-    setIsModalOpen(true);
-  };
-  
-  const fecharModal = () => {
-    setIsModalOpen(false);
-    loadUsers();
-  };
-
-  const handleDelete = (userId: string) => {
-    if (window.confirm("Tem certeza que deseja remover este usuário?")) {
-      const existingUsers = getFromLocalStorage<User[]>('users') || [];
-      const updatedUsers = existingUsers.filter(user => user.id !== userId);
-      saveToLocalStorage('users', updatedUsers);
-      setUsers(updatedUsers);
+  const fetchUsers = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        navigate('/');
+        return;
+    }
+    try {
+        const response = await fetch('http://localhost:3000/api/users', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if(data.data) setUsers(data.data);
+    } catch (error) {
+        console.error(error);
+    } finally {
+        setLoading(false);
     }
   };
 
-  const navigate = useNavigate();
+  useEffect(() => {
+    fetchUsers();
+  }, [navigate]);
 
   const handleLogout = () => {
+    localStorage.removeItem('token');
     localStorage.removeItem('isAuthenticated');
     navigate('/');
   };
 
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Tem certeza que deseja excluir este usuário?")) return;
+
+    const token = localStorage.getItem('token');
+    try {
+        const response = await fetch(`http://localhost:3000/api/users/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            alert("Usuário excluído com sucesso!");
+            setUsers(users.filter(user => user._id !== id));
+        } else {
+            alert("Erro ao excluir usuário");
+        }
+    } catch (error) {
+        alert("Erro de conexão.");
+    }
+  };
+
+  const handleEdit = (user: User) => {
+    setEditingUser(user);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenCreate = () => {
+    setEditingUser(null);
+    setIsModalOpen(true);
+  }
+
   return (
-    <div className="users-container">
+    <>
       <header className="header-container">
-        <button className="avatar">
-                <img id='picture' src='images\avatar.png'></img>
-        </button>
+        <div className="avatar">
+            <img src="images/avatar.png" alt="Avatar" id="picture" />
+        </div>
       </header>
 
-      <nav className="leftNav-container">
-          <img className="logo-left" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
-          <div className="nav-items">
-            <NavLink to="/produtos" className={() => "nav-item"}>Produtos</NavLink>
-            <NavLink to="/promocoes" className={() => "nav-item"}>Promoções</NavLink>
-            <NavLink to="/usuarios" className={() => "nav-item-active"}>Usuários</NavLink>
-          </div>
-  
-          <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
-      </nav>
+      <div className="leftNav-container">
+        <div className="logo-left">
+            <img src="images/WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="Logo" style={{width: '100%'}}/>
+        </div>
+        
+        <div className="nav-items">
+            <div className="nav-item" onClick={() => navigate('/produtos')}>Produtos</div>
+            <div className="nav-item" onClick={() => navigate('/promocoes')}>Promoções</div>
+            <div className="nav-item-active">Usuários</div>
+        </div>
 
-      <main className="main-users">
+        <div className="nav-item-logout" onClick={handleLogout}>
+            Logout
+        </div>
+      </div>
+
+      <div className="main-users">
         <div className="main-title">
             <h1>Gerenciamento de Usuários</h1>
-            <button className="userAdd-button" onClick={abrirModal}>
-              Adicionar Novo Usuários
+            <button className="userAdd-button" onClick={handleOpenCreate}>
+                + Adicionar Usuário
             </button>
         </div>
 
         <div className="users-table-container">
-          <table className="users-table">
-            <thead>
-              <tr>
-                <th>ID</th> 
-                <th>Nome</th>
-                <th>Email</th>
-                <th>CPF</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.length > 0 ? (
-                users.map(user => (
-                  <tr key={user.id}>
-                    <td>{user.id}</td> 
-                    <td>{user.name}</td>
-                    <td>{user.email}</td>
-                    <td>{user.cpf}</td>
-                    <td>
-                      <button 
-                        className="table-action-button-remove" 
-                        onClick={() => handleDelete(user.id)}
-                      >
-                        Remover
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={5} className="table-empty">
-                    Nenhum usuário cadastrado.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+            {loading ? (
+                <p style={{padding: '20px'}}>Carregando...</p>
+            ) : (
+                <table className="users-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>CPF</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {users.length > 0 ? (
+                            users.map((user) => (
+                                <tr key={user._id}>
+                                    <td>{user.name}</td>
+                                    <td>{user.email}</td>
+                                    <td>{user.cpf}</td>
+                                    <td>
+                                        <button 
+                                            className="btn-edit"
+                                            onClick={() => handleEdit(user)}
+                                        >
+                                            Editar
+                                        </button>
+                                        <button 
+                                            className="table-action-button-remove" 
+                                            onClick={() => handleDelete(user._id)}
+                                        >
+                                            Excluir
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan={4} className="table-empty">Nenhum usuário encontrado.</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
+            )}
         </div>
-        
-      </main>
+      </div>
 
-      <ModalCadastro isOpen={isModalOpen} onClose={fecharModal} />
-    </div>
-  )
-}
+      <ModalCadastro 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={fetchUsers} 
+        userToEdit={editingUser}
+      />
+    </>
+  );
+};
 
 export default Users;
