@@ -114,7 +114,7 @@ const ModalCadastro = ({ isOpen, onClose, onSuccess, userToEdit }: ModalProps) =
         }
 
     } catch (error) {
-        alert("Erro de conexão.");
+        alert("Erro de conexão." + error);
     }
   };
 

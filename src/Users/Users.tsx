@@ -63,7 +63,7 @@ const Users = () => {
             alert("Erro ao excluir usuário");
         }
     } catch (error) {
-        alert("Erro de conexão.");
+        alert("Erro de conexão." + error);
     }
   };
 
@@ -76,6 +76,7 @@ const Users = () => {
     setEditingUser(null);
     setIsModalOpen(true);
   }
+  
 
   return (
     <>

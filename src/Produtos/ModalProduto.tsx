@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 
 export interface newProduct {
@@ -23,119 +23,124 @@ export interface FormErrors {
 type ModalProps = {
     isOpen: boolean;
     onClose: () => void;
-    onProductAdded: (newProduct: newProduct) => Promise<void>;
+    onSuccess: () => void;
+    productToEdit: newProduct | null;
 }
 
-const ModalProduto = ({ isOpen, onClose, onProductAdded }: ModalProps) => {
+const ModalProduto = ({ isOpen, onClose, onSuccess, productToEdit }: ModalProps) => {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
   const [price, setPrice] = useState<number | string>('');
   const [stock, setStock] = useState<number | string>('');
   const [errors, setErrors] = useState<FormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submissionError, setSubmissionError] = useState<string | null>(null);
+  const [submissionError, ] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (productToEdit) {
+        setName(productToEdit.name);
+        setCategory(productToEdit.category);
+        setPrice(productToEdit.price);
+        setStock(productToEdit.stock);
+    } else {
+        setName('');
+        setCategory('');
+        setPrice('');
+        setStock('');
+    }
+    setErrors({});
+   }, [productToEdit, isOpen]); 
 
   if (!isOpen) {
     return null;
   }
 
-  const validateForm = (priceValue: number, stockValue: number): FormErrors => {
+  const validateForm = (): FormErrors => {
     const newErrors: FormErrors = {};
-    const codeString = code.trim();
-    const numberRegex = /^\d+$/; 
-    
+
+    // Validação do código
+    const codeString = typeof code === 'string' ? code.trim() : String(code).trim();
+    const numberRegex = /^\d+$/;
+
     if (!codeString) {
-        newErrors.code = "O código do produto é obrigatório.";
+      newErrors.code = "O código do produto é obrigatório.";
     } else if (!numberRegex.test(codeString)) {
-        newErrors.code = "O código deve conter apenas números (sem espaços ou caracteres especiais).";
-    } else if (parseInt(codeString, 10) <= 0) { 
-        newErrors.code = "O código do produto deve ser um número positivo (maior que zero).";
+      newErrors.code = "O código deve conter apenas números (sem espaços ou caracteres especiais).";
+    } else if (parseInt(codeString, 10) <= 0) {
+      newErrors.code = "O código do produto deve ser um número positivo (maior que zero).";
     }
+
     if (!name.trim()) {
       newErrors.name = "Nome do produto é obrigatório.";
     }
+
     if (!category.trim()) {
       newErrors.category = "Categoria é obrigatória.";
     }
-    
+
+    const priceValue = typeof price === 'number' ? price : parseFloat(String(price));
     if (isNaN(priceValue) || priceValue <= 0) {
       newErrors.price = "Preço deve ser um valor positivo maior que zero.";
     }
-    
-    
+
+    const stockValue = typeof stock === 'number' ? stock : parseInt(String(stock), 10);
     if (isNaN(stockValue) || stockValue < 0) {
       newErrors.stock = "Estoque deve ser um número maior que zero.";
     }
+
     return newErrors;
   };
 
-    const resetFields = () => {
-      setCode('');
-      setName('');
-      setCategory('');
-      setPrice('');
-      setStock('');
-      setErrors({});
-    };
+
 
 
   const handleSubmit = async (event: React.FormEvent) => {
       event.preventDefault();
-      setErrors({});
-      const priceValue = parseFloat(`${price}`.replace(',', '.')) || 0;
-      const stockValue = parseInt(stock as string, 10) || 0;
-      
-      const validationErrors = validateForm(priceValue, stockValue);
-      
+  
+      const validationErrors = validateForm();
       if (Object.keys(validationErrors).length > 0) {
-          setErrors(validationErrors);
-          return;
+        setErrors(validationErrors);
+        return;
       }
-
-      const newProduct: newProduct = {
-          code: code.trim(), 
-          name: name,
-          category: category,
-          price: priceValue,
-          stock: stockValue,
-      };
+  
+      const token = localStorage.getItem('token');
       
-      setIsSubmitting(true);
-      
+      // Define se é POST (criar) ou PUT (editar)
+      const method = productToEdit ? 'PUT' : 'POST';
+      const url = productToEdit 
+          ? `http://localhost:3000/api/produtos/${productToEdit.code}` 
+          : 'http://localhost:3000/api/produtos';
+  
       try {
-          // 3. Chama a função de API passada via props
-          await onProductAdded(newProduct);
-          
-          // Sucesso: Reseta campos e fecha o modal
-          resetFields();
-          onClose(); 
-          
+          const response = await fetch(url, {
+              method: method,
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}` 
+              },
+              body: JSON.stringify({
+                  code,
+                  name,
+                  category,
+                  price,
+                  stock
+              })
+          });
+  
+          const data = await response.json();
+  
+          if (response.ok) {
+              alert(productToEdit ? 'Produto atualizado!' : 'Produto cadastrado!');
+              onSuccess();
+              onClose();
+          } else {
+              alert(data.message || "Erro ao salvar");
+          }
+  
       } catch (error) {
-        console.error("Erro completo da API ao cadastrar produto:", error); 
-            
-        // Tenta extrair a mensagem de erro:
-        let errorMessage = "Erro desconhecido ao cadastrar.";
-        
-        // Se for um objeto Error padrão, usa a message.
-        if (error instanceof Error) {
-            errorMessage = error.message;
-        } 
-        // Se for um objeto genérico retornado (por exemplo, { message: '...' })
-        else if (typeof error === 'object' && error !== null && 'message' in error) {
-            errorMessage = (error as { message: string }).message;
-        }
-        // Se o erro vier de um `throw` simples de string/número
-        else if (typeof error === 'string') {
-            errorMessage = error;
-        }
-          
-        setSubmissionError(`Falha no cadastro: ${errorMessage}`);
-          
-      } finally {
-          setIsSubmitting(false);
+          alert("Erro de conexão." + error);
       }
-  };
+    };
 
   
   return (
@@ -148,6 +153,9 @@ const ModalProduto = ({ isOpen, onClose, onProductAdded }: ModalProps) => {
                 &times;
             </button>
         </div>
+
+        <h2>{productToEdit ? 'Editar Produto' : 'Cadastrar Novo Produto'}</h2>
+
         <form className="modal-form" onSubmit={handleSubmit}>
             
             {submissionError && (
@@ -216,11 +224,8 @@ const ModalProduto = ({ isOpen, onClose, onProductAdded }: ModalProps) => {
                 </div>
             </div>
             
-            <button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="form-submit-button">
-                {isSubmitting ? 'Cadastrando...' : 'Cadastrar Produto'}
+            <button type="submit" className="form-submit-button">
+                {productToEdit ? 'Salvar Alterações' : 'Cadastrar'}
             </button>
         </form>
       </div>
