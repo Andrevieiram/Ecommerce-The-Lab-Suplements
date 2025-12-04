@@ -8,7 +8,6 @@ interface FormErrors {
   password?: string;
 }
 
-// Interface do usuário
 interface User {
     _id: string;
     name: string;
@@ -20,7 +19,7 @@ type ModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  userToEdit: User | null; // <--- NOVA PROP: Recebe o usuário para editar
+  userToEdit: User | null; 
 }
 
 const ModalCadastro = ({ isOpen, onClose, onSuccess, userToEdit }: ModalProps) => {
@@ -30,16 +29,13 @@ const ModalCadastro = ({ isOpen, onClose, onSuccess, userToEdit }: ModalProps) =
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
 
-  // EFEITO: Quando o modal abre ou o 'userToEdit' muda, preenche ou limpa o formulário
   useEffect(() => {
     if (userToEdit) {
-        // Modo Edição
         setName(userToEdit.name);
         setCpf(userToEdit.cpf);
         setEmail(userToEdit.email);
         setPassword(''); // Senha vazia na edição (só preenche se quiser trocar)
     } else {
-        // Modo Cadastro (Limpa tudo)
         setName('');
         setCpf('');
         setEmail('');
