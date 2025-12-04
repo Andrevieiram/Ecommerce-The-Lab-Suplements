@@ -1,44 +1,133 @@
-import { useNavigate, NavLink } from 'react-router-dom'; 
-import './Produtos.css';
-import { getProducts, saveProducts } from './StorageProducts.tsx'; 
-import ModalProduto from './ModalProduto.tsx'; 
-import { useState, useEffect } from 'react';
-
-
-interface Product {
-  id: string; 
-  name: string;
-  category: string;
-  price: string; 
-  stock: string;
-  status: 'Ativo' | 'Inativo';
-}
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, NavLink } from 'react-router-dom';
+import ModalProduto, { type newProduct } from './ModalProduto.tsx';
 
 const Produtos = () => {
+  
   const navigate = useNavigate(); 
   
+  const getToken = () => localStorage.getItem('token');
   
-  const [products, setProducts] = useState<Product[]>([]); 
+  const [products, setProducts] = useState<newProduct[]>([]); 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [, setIsLoading] = useState(false);
+
+  interface Product {
+    _id?: string;
+    code: string;
+    name: string;
+    category: string;
+    price: number;
+    stock: number;
+    status: boolean;
+  }
   
-  const loadProducts = () => {
-    const storedProducts = getProducts<Product[]>('products') || []; 
-    setProducts(storedProducts);
+  const fetchProducts = useCallback(async () => {
+    setIsLoading(true);
+    const token = getToken();
+
+    if (!token) {
+        console.error("Token de autenticação ausente.");
+        setIsLoading(false);
+        navigate('/'); 
+        return;
+    }
+
+    try {
+        const response = await fetch('http://localhost:3000/api/produtos', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({})
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error('Credenciais inválidas.');
+            return;
+        }
+
+        const fetchedProducts: Product[] = (data.data || []).map((p: any) => ({
+            _id: p._id, 
+            code: String(p.code),
+            name: String(p.name),
+            category: String(p.category),
+            price: parseFloat(p.price),
+            stock: parseInt(p.stock),
+            status: p.status === true ? 'Ativo' : 'Inativo',
+        }));
+        setProducts(fetchedProducts); 
+    } catch (error) {
+        console.error("Erro ao carregar produtos:", error);
+    } finally {
+        setIsLoading(false);
+    }
+  }, []);
+  
+  const handleDelete = async (codeToDelete: string) => {
+    if (!window.confirm("Confirmar remoção do produto?")) return;
+    
+    setIsLoading(true);
+    const token = getToken();
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/produtos/${codeToDelete}`, { 
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`, 
+            },
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Falha na remoção do backend.');
+        }
+
+        setProducts(prev => prev.filter(product => product.code !== codeToDelete));
+        
+    } catch (error) {
+      console.error("Erro ao deletar produto:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
   
-  const handleDelete = (idToDelete: string) => {
-    const updatedProducts = products.filter((product: { id: string; }) => product.id !== idToDelete);
-    setProducts(updatedProducts);
-    saveProducts('products', updatedProducts); 
-  };
-  
-  const handleProductAdded = (newProduct: Product) => {
-      setProducts(prev => [...prev, newProduct]);
+  const handleProductAdded = async (newProduct: newProduct) => {
+    setIsLoading(true);
+    const token = getToken();
+
+    try {
+        const response = await fetch('http://localhost:3000/api/produtos', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(newProduct)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Falha ao adicionar produto.');
+        }
+
+        await fetchProducts(); 
+        
+    } catch (error) {
+        console.error("Erro ao adicionar produto:", error);
+        alert("Erro ao adicionar produto ");
+    } finally {
+        setIsLoading(false);
+    }
   };
 
 
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated'); 
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('token'); 
     navigate('/'); 
   };
 
@@ -47,20 +136,19 @@ const Produtos = () => {
   const abrirModal = () => setIsModalOpen(true);
   
   const fecharModal = () => {
-      setIsModalOpen(false);
-      loadProducts(); 
+    setIsModalOpen(false);
   }
 
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated');
-    if (!isAuthenticated) {
-        navigate('/');
-        return; 
-    }
-    
-    loadProducts();
-  }, [navigate]);
-  
+    useEffect(() => {
+      const token = getToken(); 
+      if (!token) {
+          navigate('/'); 
+          return; 
+      }
+      
+      
+      fetchProducts();
+    }, [navigate, fetchProducts]);
 
   return (
     <div className = "products-container">
@@ -74,10 +162,10 @@ const Produtos = () => {
           <img className="logo-left" src="images\WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png" alt="The Lab Suplements" />
       
           <div className="nav-items">
-  <NavLink to="/produtos" className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}>Produtos</NavLink>
-  <NavLink to="/promocoes" className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}>Promoções</NavLink>
-  <NavLink to="/usuarios" className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}>Usuários</NavLink>
-</div>
+            <NavLink to="/produtos" className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}>Produtos</NavLink>
+            <NavLink to="/promocoes" className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}>Promoções</NavLink>
+            <NavLink to="/usuarios" className={({ isActive }) => isActive ? "nav-item-active" : "nav-item"}>Usuários</NavLink>
+          </div>
 
 
           <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
@@ -95,7 +183,7 @@ const Produtos = () => {
           <table className="products-table">
             <thead>
               <tr>
-                <th>ID</th> 
+                <th>Code</th> 
                 <th>Nome</th> 
                 <th>Categoria</th>
                 <th>Estoque</th>
@@ -106,18 +194,18 @@ const Produtos = () => {
             </thead>
             <tbody>
                 {products.length > 0 ? (
-                products.map((product: Product) => (
-                  <tr key={product.id}>
-                  <td>{product.id}</td> 
+                products.map((product) => (
+                  <tr key={product._id}>
+                  <td>{product.code}</td> 
                   <td>{product.name}</td>
                   <td>{product.category}</td>
                   <td>{product.stock}</td> 
                   <td>{product.price}</td> 
-                  <td>{product.status}</td> 
+                  <td>{product.status === true ? "Ativo" : "Inativo"}</td> 
                   <td>
                     <button 
                     className="table-action-button-remove" 
-                    onClick={(): void => handleDelete(product.id)}
+                    onClick={() => handleDelete(product.code)}
                     >
                     Remover
                     </button>
@@ -142,8 +230,8 @@ const Produtos = () => {
           onProductAdded={handleProductAdded} 
       />
     </div>
-  )
-}
+  );
+};
 
 export default Produtos;
 
