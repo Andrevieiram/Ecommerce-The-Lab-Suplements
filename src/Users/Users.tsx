@@ -97,9 +97,7 @@ const Users = () => {
             <div className="nav-item-active">Usuários</div>
         </div>
 
-        <div className="nav-item-logout" onClick={handleLogout}>
-            Logout
-        </div>
+        <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
       </div>
 
       <div className="main-users">
