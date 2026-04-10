@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Users.css';
 import ModalCadastro from './ModalCadastro';
+import api from '../../api';
 
 interface User {
   _id: string;
@@ -20,19 +21,26 @@ const Users = () => {
   const fetchUsers = async () => {
     const token = localStorage.getItem('token');
     if (!token) {
-        navigate('/');
-        return;
+      navigate('/');
+      return;
     }
+
     try {
-        const response = await fetch('http://localhost:3000/api/users', {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
-        if(data.data) setUsers(data.data);
+
+      const response = await api.get('/users', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.data && response.data.data) {
+        setUsers(response.data.data);
+      } else if (Array.isArray(response.data)) {
+        setUsers(response.data);
+      }
+      
     } catch (error) {
-        console.error(error);
+      console.error("Erro ao buscar usuários:", error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -51,19 +59,16 @@ const Users = () => {
 
     const token = localStorage.getItem('token');
     try {
-        const response = await fetch(`http://localhost:3000/api/users/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+      await api.delete(`/users/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
 
-        if (response.ok) {
-            alert("Usuário excluído com sucesso!");
-            setUsers(users.filter(user => user._id !== id));
-        } else {
-            alert("Erro ao excluir usuário");
-        }
+      alert("Usuário excluído com sucesso!");
+      setUsers(users.filter(user => user._id !== id));
+      
     } catch (error) {
-        alert("Erro de conexão." + error);
+      alert("Erro ao excluir usuário ou erro de conexão.");
+      console.error(error);
     }
   };
 

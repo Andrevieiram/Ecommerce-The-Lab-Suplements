@@ -1,8 +1,5 @@
-import { useNavigate, NavLink } from 'react-router-dom';
-import './Promocoes.css';
-import { getPromocoes, savePromocoes } from './StoragePromocoes.tsx';
-import ModalPromocao from './ModalPromocao.tsx';
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import './ModalPromocao.css';
 
 interface Promocao {
   id: string;
@@ -16,137 +13,82 @@ interface Promocao {
   status: 'Ativa' | 'Inativa';
 }
 
-const Promocoes = () => {
-  const navigate = useNavigate();
-  const [promocoes, setPromocoes] = useState<Promocao[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  const loadPromocoes = () => {
-    const storedPromocoes = getPromocoes<Promocao[]>('promocoes') || []; 
-    setPromocoes(storedPromocoes);
-  };
-  
-  const handleDelete = (idToDelete: string) => {
-    if (window.confirm("Tem certeza que deseja remover esta promoção?")) {
-      const updatedPromocoes = promocoes.filter((promo: Promocao) => promo.id !== idToDelete);
-      setPromocoes(updatedPromocoes);
-      savePromocoes('promocoes', updatedPromocoes);
-    }
-  };
+interface ModalPromocaoProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onPromocaoAdded: (newPromocao: Promocao) => void; // A função que faltava aqui
+}
 
-  const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    navigate('/');
-  };
+const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalPromocaoProps) => {
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState('');
+  const [stock] = useState('');
+  const [unit] = useState('un');
+  const [price, setPrice] = useState('');
+  const [discount, setDiscount] = useState('');
 
-  const abrirModal = () => setIsModalOpen(true);
-  const fecharModal = () => setIsModalOpen(false);
+  if (!isOpen) return null;
 
-  useEffect(() => {
-    const isAuthenticated = localStorage.getItem('isAuthenticated');
-    if (!isAuthenticated) {
-      navigate('/');
-      return;
-    }
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Cálculo básico do novo preço se houver desconto
+    const valorPreco = parseFloat(price);
+    const valorDesconto = parseFloat(discount || '0');
+    const novoPrecoCalculado = valorPreco - (valorPreco * (valorDesconto / 100));
+
+    const novaPromocao: Promocao = {
+      id: Math.random().toString(36).substr(2, 9), // Gera um ID aleatório
+      name,
+      category,
+      stock,
+      unit,
+      price,
+      discount,
+      newPrice: novoPrecoCalculado.toFixed(2),
+      status: 'Ativa'
+    };
+
+    // AQUI ESTÁ O PULO DO GATO:
+    onPromocaoAdded(novaPromocao); 
     
-    loadPromocoes();
-
-  }, [navigate]);
-
-  const handlePromocaoAdded = (newPromocao: Promocao) => {
-    setPromocoes(prev => [...prev, newPromocao]);
+    // Limpa os campos e fecha
+    setName('');
+    setCategory('');
+    setPrice('');
+    setDiscount('');
+    onClose();
   };
 
   return (
-    <div className="promocoes-container">
-      <header className="header-container">
-        <button className="avatar">
-          <img id='picture' src='images/avatar.png' alt="Avatar" />
-        </button>
-      </header>
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <h2>Adicionar Nova Promoção</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Nome do Produto:</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} required />
+          </div>
 
-      <nav className="leftNav-container">
-        <img
-          className="logo-left"
-          src="images/WhatsApp_Image_2025-10-28_at_11.50.35-removebg-preview.png"
-          alt="The Lab Suplements"
-        />
+          <div className="form-row">
+            <div className="form-group">
+              <label>Preço Original:</label>
+              <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} required />
+            </div>
+            <div className="form-group">
+              <label>Desconto (%):</label>
+              <input type="number" value={discount} onChange={(e) => setDiscount(e.target.value)} />
+            </div>
+          </div>
 
-        <div className="nav-items">
-          <NavLink to="/produtos" className={() => "nav-item"}>Produtos</NavLink>
-          <NavLink to="/promocoes" className={() => "nav-item-active"}>Promoções</NavLink>
-          <NavLink to="/usuarios" className={() => "nav-item"}>Usuários</NavLink>
-        </div>
-
-        <button className="nav-item-logout" onClick={handleLogout}>Logout</button>
-      </nav>
-
-      <main className="main-promocoes">
-        <div className="main-title">
-          <h1>Gerenciamento de Promoções</h1>
-          <button className="promocaoAdd-button" onClick={abrirModal}>
-            Adicionar Nova Promoção
-          </button>
-        </div>
-
-        <div className="promocoes-table-container">
-          <table className="promocoes-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nome</th>
-                <th>Categoria</th>
-                <th>Estoque</th>
-                <th>Unidade</th>
-                <th>Preço</th>
-                <th>Desconto</th>
-                <th>Novo Preço</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {promocoes.length > 0 ? (
-                promocoes.map((p: Promocao) => (
-                  <tr key={p.id}>
-                    <td>{p.id}</td>
-                    <td>{p.name}</td>
-                    <td>{p.category}</td>
-                    <td>{p.stock}</td>
-                    <td>{p.unit}</td>
-                    <td>{p.price}</td>
-                    <td>{p.discount || '-'}</td>
-                    <td>{p.newPrice || '-'}</td>
-                    <td>{p.status}</td>
-                    <td>
-                      <button
-                        className="table-action-button-remove"
-                        onClick={() => handleDelete(p.id)}
-                      >
-                        Remover
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={10} className="table-empty">
-                    Nenhuma promoção cadastrada.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </main>
-
-      <ModalPromocao
-        isOpen={isModalOpen}
-        onClose={fecharModal}
-        onPromocaoAdded={handlePromocaoAdded}
-      />
+          <div className="modal-actions">
+            <button type="button" onClick={onClose} className="btn-cancelar">Cancelar</button>
+            <button type="submit" className="btn-salvar">Salvar Promoção</button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default Promocoes;
+export default ModalPromocao;

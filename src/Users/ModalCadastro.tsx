@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './ModalCadastro.css';
+import api from '../../api';
 
 interface FormErrors {
   name?: string;
@@ -80,41 +81,32 @@ const ModalCadastro = ({ isOpen, onClose, onSuccess, userToEdit }: ModalProps) =
       return;
     }
 
-    const token = localStorage.getItem('token');
-    
-    // Define se é POST (criar) ou PUT (editar)
-    const method = userToEdit ? 'PUT' : 'POST';
-    const url = userToEdit 
-        ? `http://localhost:3000/api/users/${userToEdit._id}` 
-        : 'http://localhost:3000/api/users';
 
     try {
-        const response = await fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` // Token é importante para o update
-            },
-            body: JSON.stringify({
-                name,
-                email,
-                cpf,
-                password: password || undefined // Se a senha for vazia, não envia no JSON
-            })
-        });
+      const payload = {
+        name,
+        email,
+        cpf,
+        password: password || undefined
+      };
 
-        const data = await response.json();
+      if (userToEdit) {
+        // Modo Edição
+        await api.put(`/users/${userToEdit._id}`, payload);
+        alert('Usuário atualizado com sucesso!');
+      } else {
+        // Modo Cadastro
+        await api.post('/users', payload);
+        alert('Usuário cadastrado com sucesso!');
+      }
 
-        if (response.ok) {
-            alert(userToEdit ? 'Usuário atualizado!' : 'Usuário cadastrado!');
-            onSuccess();
-            onClose();
-        } else {
-            alert(data.message || "Erro ao salvar");
-        }
-
+      onSuccess();
+      onClose();
     } catch (error) {
-        alert("Erro de conexão." + error);
+      const errorMessage = error instanceof Error && 'response' in error 
+        ? (error as { response?: { data?: { message: string } } }).response?.data?.message 
+        : "Erro ao salvar";
+      alert(errorMessage);
     }
   };
 

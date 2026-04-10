@@ -1,126 +1,77 @@
 import React, { useState, useEffect } from 'react';
-import './ModalPromocao.css';
-import { savePromocoes, getPromocoes } from './StoragePromocoes.tsx';
-import { getProducts } from '../Produtos/StorageProducts.tsx';
-
-interface Promocao {
-  id: string;
-  name: string;
-  category: string;
-  stock: string;
-  unit: string;
-  price: string;
-  discount: string;
-  newPrice?: string;
-  status: 'Ativa' | 'Inativa';
-}
-
-interface Product {
-  id: string;
-  name: string;
-  category: string;
-  price: string; 
-  stock: string; 
-  status: 'Ativo' | 'Inativo';
-}
+import './ModalCadastro.css';
+import api from '../../api';
 
 interface FormErrors {
   name?: string;
-  category?: string;
-  stock?: string;
-  unit?: string;
-  price?: string;
-  discount?: string;
+  cpf?: string;
+  email?: string;
+  password?: string;
+}
+
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  cpf: string;
 }
 
 type ModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onPromocaoAdded: (newPromocao: Promocao) => void;
-};
+  onSuccess: () => void;
+  userToEdit: User | null;
+}
 
-const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
+const ModalCadastro = ({ isOpen, onClose, onSuccess, userToEdit }: ModalProps) => {
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
-  const [stock, setStock] = useState('');
-  const [unit, setUnit] = useState('');
-  const [price, setPrice] = useState('');
-  const [discount, setDiscount] = useState('');
-  const [status, setStatus] = useState<'Ativa' | 'Inativa'>('Ativa');
+  const [cpf, setCpf] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false); // Estado para evitar cliques duplos
 
- 
-  const [products, setProducts] = useState<Product[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState('');
-
+  // EFEITO: Sincroniza os campos com o usuário selecionado ou limpa para novo cadastro
   useEffect(() => {
     if (isOpen) {
-      const storedProducts = getProducts<Product[]>('products') || [];
-      setProducts(storedProducts.filter(p => p.status === 'Ativo'));
+      if (userToEdit) {
+        setName(userToEdit.name);
+        setCpf(userToEdit.cpf);
+        setEmail(userToEdit.email);
+      } else {
+        setName('');
+        setCpf('');
+        setEmail('');
+      }
+      setPassword('');
+      setErrors({});
     }
-
-  }, [isOpen]);
+  }, [userToEdit, isOpen]);
 
   if (!isOpen) return null;
 
   const validateForm = (): FormErrors => {
     const newErrors: FormErrors = {};
-    if (!name.trim()) newErrors.name = "Nome (preenchido a partir do produto) é obrigatório.";
-    if (!category.trim()) newErrors.category = "Categoria é obrigatória.";
-    if (!stock.trim() || isNaN(Number(stock)) || Number(stock) < 0) newErrors.stock = "Estoque inválido.";
-    if (!unit.trim()) newErrors.unit = "Unidade é obrigatória.";
-    if (!price.trim() || isNaN(Number(price)) || Number(price) <= 0) newErrors.price = "Preço inválido.";
-    if (!discount.trim() || isNaN(Number(discount)) || Number(discount) <= 0) newErrors.discount = "Desconto deve ser maior que zero.";
+    if (!name.trim()) newErrors.name = "Nome é obrigatório.";
+    if (!cpf.trim() || cpf.length < 14) newErrors.cpf = "CPF inválido.";
+    if (!email.trim() || !email.includes('@')) newErrors.email = "E-mail inválido.";
+    
+    // Senha obrigatória apenas em novos cadastros
+    if (!userToEdit && !password.trim()) {
+      newErrors.password = "Senha é obrigatória.";
+    }
     return newErrors;
   };
 
-  const resetFields = () => {
-    setName('');
-    setCategory('');
-    setStock('');
-    setUnit('');
-    setPrice('');
-    setDiscount('');
-    setStatus('Ativa');
-    setErrors({});
-    setSelectedProductId(''); 
+  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value.replace(/\D/g, '');
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d)/, '$1.$2');
+    value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    setCpf(value);
   };
 
-
-  const handleProductChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const productId = e.target.value;
-    setSelectedProductId(productId);
-
-    if (productId) {
-      const selectedProduct = products.find(p => p.id === productId);
-      if (selectedProduct) {
-
-        setName(selectedProduct.name);
-        setCategory(selectedProduct.category);
-        
-        const parsedPrice = selectedProduct.price
-          .replace('R$', '')
-          .trim()
-          .replace('.', '') 
-          .replace(',', '.');
-        setPrice(parsedPrice);
-
-        const parsedStock = parseInt(selectedProduct.stock, 10);
-        setStock(isNaN(parsedStock) ? '' : parsedStock.toString());
-        
-        setUnit(''); 
-        setErrors({}); 
-      }
-    } else {
-      setName('');
-      setCategory('');
-      setPrice('');
-      setStock('');
-      setUnit('');
-    }
-  };
-
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
     const validationErrors = validateForm();
@@ -129,154 +80,99 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
       return;
     }
 
-    const discountValue = parseFloat(discount.replace(',', '.'));
-    const priceValue = parseFloat(price.replace(',', '.'));
+    setIsSubmitting(true);
 
-    const formattedPrice = `R$ ${priceValue.toFixed(2).replace('.', ',')}`;
-    const newPriceValue = priceValue - (priceValue * discountValue / 100);
-    const formattedNewPrice = `R$ ${newPriceValue.toFixed(2).replace('.', ',')}`;
+    try {
+      const payload = {
+        name,
+        email,
+        cpf,
+        ...(password && { password }) // Só envia a senha se ela for preenchida
+      };
 
-    const finalDiscountString = `${discountValue.toFixed(2).replace('.', ',')}%`;
+      if (userToEdit) {
+        await api.put(`/users/${userToEdit._id}`, payload);
+        alert('Usuário atualizado com sucesso!');
+      } else {
+        await api.post('/users', payload);
+        alert('Usuário cadastrado com sucesso!');
+      }
 
-    const existingPromocoes = getPromocoes<Promocao[]>('promocoes') || [];
-
-    let maxId = 0;
-    for (const promo of existingPromocoes) {
-      const idNum = parseInt(promo.id.replace('#', ''));
-      if (idNum > maxId) maxId = idNum;
+      onSuccess();
+      onClose();
+    } catch (error) {
+      const msg = (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Erro ao processar requisição";
+      alert(msg);
+      console.error("Erro no cadastro:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-    const newId = maxId + 1;
-
-    const newPromocao: Promocao = {
-      id: `#${newId.toString().padStart(4, '0')}`,
-      name,
-      category,
-      stock,
-      unit,
-      price: formattedPrice,
-      discount: finalDiscountString,
-      newPrice: formattedNewPrice,
-      status,
-    };
-
-    const updatedPromocoes = [...existingPromocoes, newPromocao];
-    savePromocoes('promocoes', updatedPromocoes);
-    onPromocaoAdded(newPromocao);
-
-    alert('Promoção cadastrada com sucesso!');
-    resetFields(); 
-    onClose();
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-button" onClick={onClose}>
-          &times;
-        </button>
+        <button className="modal-close-button" onClick={onClose}>&times;</button>
 
-        <h2>Cadastrar Nova Promoção</h2>
+        <h2>{userToEdit ? 'Editar Usuário' : 'Novo Usuário'}</h2>
 
         <form className="modal-form" onSubmit={handleSubmit}>
-
           <div className="form-group">
-            <label htmlFor="product">Produto:</label>
-            <select
-              id="product"
-              value={selectedProductId}
-              onChange={handleProductChange}
-              style={{ borderColor: errors.name ? '#e63946' : '#ccc' }}
-            >
-              <option value="">Selecione um produto...</option>
-              {products.map(product => (
-                <option key={product.id} value={product.id}>
-                  {product.name}
-                </option>
-              ))}
-            </select>
-            {errors.name && <span className="error-message">{errors.name}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="category">Categoria:</label>
-            <input
-              type="text"
-              id="category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              style={{ borderColor: errors.category ? '#e63946' : '#ccc' }}
+            <label>Nome Completo</label>
+            <input 
+              type="text" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+              className={errors.name ? 'input-error' : ''}
             />
-            {errors.category && <span className="error-message">{errors.category}</span>}
+            {errors.name && <span className="error-text">{errors.name}</span>}
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label>CPF</label>
+              <input 
+                type="text" 
+                placeholder="000.000.000-00" 
+                value={cpf} 
+                onChange={handleCpfChange} 
+                maxLength={14}
+                className={errors.cpf ? 'input-error' : ''}
+              />
+              {errors.cpf && <span className="error-text">{errors.cpf}</span>}
+            </div>
+
+            <div className="form-group">
+              <label>E-mail</label>
+              <input 
+                type="email" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                className={errors.email ? 'input-error' : ''}
+              />
+              {errors.email && <span className="error-text">{errors.email}</span>}
+            </div>
           </div>
 
           <div className="form-group">
-            <label htmlFor="stock">Estoque (da promoção):</label>
-            <input
-              type="number"
-              id="stock"
-              value={stock}
-              onChange={(e) => setStock(e.target.value)}
-              min="0"
-              style={{ borderColor: errors.stock ? '#e63946' : '#ccc' }}
+            <label>
+              Senha {userToEdit && <small>(Deixe vazio para não alterar)</small>}
+            </label>
+            <input 
+              type="password" 
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)} 
+              className={errors.password ? 'input-error' : ''}
             />
-            {errors.stock && <span className="error-message">{errors.stock}</span>}
+            {errors.password && <span className="error-text">{errors.password}</span>}
           </div>
 
-          <div className="form-group">
-            <label htmlFor="unit">Unidade:</label>
-            <input
-              type="text"
-              id="unit"
-              value={unit}
-              onChange={(e) => setUnit(e.target.value)}
-              placeholder='ex: un, kg, pct'
-              style={{ borderColor: errors.unit ? '#e63946' : '#ccc' }}
-            />
-            {errors.unit && <span className="error-message">{errors.unit}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="price">Preço Original (R$):</label>
-            <input
-              type="number"
-              id="price"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              step="0.01"
-              min="0"
-              style={{ borderColor: errors.price ? '#e63946' : '#ccc' }}
-            />
-            {errors.price && <span className="error-message">{errors.price}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="discount">Desconto (%):</label>
-            <input
-              type="number"
-              id="discount"
-              value={discount}
-              onChange={(e) => setDiscount(e.target.value)}
-              step="0.01"
-              min="0"
-              style={{ borderColor: errors.discount ? '#e63946' : '#ccc' }}
-            />
-            {errors.discount && <span className="error-message">{errors.discount}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="status">Status:</label>
-            <select
-              id="status"
-              value={status}
-              onChange={(e) => setStatus(e.target.value as 'Ativa' | 'Inativa')}
-            >
-              <option value="Ativa">Ativa</option>
-              <option value="Inativa">Inativa</option>
-            </select>
-          </div>
-
-          <button type="submit" className="form-submit-button">
-            Cadastrar Promoção
+          <button 
+            type="submit" 
+            className="form-submit-button" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Salvando...' : (userToEdit ? 'Salvar Alterações' : 'Criar Usuário')}
           </button>
         </form>
       </div>
@@ -284,4 +180,4 @@ const ModalPromocao = ({ isOpen, onClose, onPromocaoAdded }: ModalProps) => {
   );
 };
 
-export default ModalPromocao;
+export default ModalCadastro;

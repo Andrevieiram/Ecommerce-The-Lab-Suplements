@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import api from '../../api'; // Ajuste o caminho conforme sua estrutura
+import './ModalProduto.css';
 
-
-export interface newProduct {
+export interface Product {
     _id?: string; 
     code: string; 
     name: string;
@@ -11,7 +12,7 @@ export interface newProduct {
     status?: boolean;
 }
 
-export interface FormErrors {
+interface FormErrors {
     code?: string;
     name?: string;
     category?: string;
@@ -19,218 +20,180 @@ export interface FormErrors {
     stock?: string;
 }
 
-
 type ModalProps = {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
-    productToEdit: newProduct | null;
+    productToEdit: Product | null;
 }
 
 const ModalProduto = ({ isOpen, onClose, onSuccess, productToEdit }: ModalProps) => {
-  const [code, setCode] = useState('');
-  const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
-  const [price, setPrice] = useState<number | string>('');
-  const [stock, setStock] = useState<number | string>('');
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [submissionError, ] = useState<string | null>(null);
+    const [code, setCode] = useState('');
+    const [name, setName] = useState('');
+    const [category, setCategory] = useState('');
+    const [price, setPrice] = useState<string>('');
+    const [stock, setStock] = useState<string>('');
+    const [errors, setErrors] = useState<FormErrors>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (productToEdit) {
-        setName(productToEdit.name);
-        setCategory(productToEdit.category);
-        setPrice(productToEdit.price);
-        setStock(productToEdit.stock);
-    } else {
-        setName('');
-        setCategory('');
-        setPrice('');
-        setStock('');
-    }
-    setErrors({});
-   }, [productToEdit, isOpen]); 
+    useEffect(() => {
+        if (isOpen) {
+            if (productToEdit) {
+                setCode(productToEdit.code);
+                setName(productToEdit.name);
+                setCategory(productToEdit.category);
+                setPrice(String(productToEdit.price));
+                setStock(String(productToEdit.stock));
+            } else {
+                setCode('');
+                setName('');
+                setCategory('');
+                setPrice('');
+                setStock('');
+            }
+            setErrors({});
+        }
+    }, [productToEdit, isOpen]);
 
-  if (!isOpen) {
-    return null;
-  }
+    if (!isOpen) return null;
 
-  const validateForm = (): FormErrors => {
-    const newErrors: FormErrors = {};
+    const validateForm = (): FormErrors => {
+        const newErrors: FormErrors = {};
+        if (!code.trim()) newErrors.code = "O código é obrigatório.";
+        if (!name.trim()) newErrors.name = "O nome é obrigatório.";
+        if (!category.trim()) newErrors.category = "A categoria é obrigatória.";
+        
+        if (!price || parseFloat(price) <= 0) {
+            newErrors.price = "Preço deve ser maior que zero.";
+        }
+        
+        if (stock === '' || parseInt(stock) < 0) {
+            newErrors.stock = "Estoque não pode ser negativo.";
+        }
 
-    // Validação do código
-    const codeString = typeof code === 'string' ? code.trim() : String(code).trim();
-    const numberRegex = /^\d+$/;
-
-    if (!codeString) {
-      newErrors.code = "O código do produto é obrigatório.";
-    } else if (!numberRegex.test(codeString)) {
-      newErrors.code = "O código deve conter apenas números (sem espaços ou caracteres especiais).";
-    } else if (parseInt(codeString, 10) <= 0) {
-      newErrors.code = "O código do produto deve ser um número positivo (maior que zero).";
-    }
-
-    if (!name.trim()) {
-      newErrors.name = "Nome do produto é obrigatório.";
-    }
-
-    if (!category.trim()) {
-      newErrors.category = "Categoria é obrigatória.";
-    }
-
-    const priceValue = typeof price === 'number' ? price : parseFloat(String(price));
-    if (isNaN(priceValue) || priceValue <= 0) {
-      newErrors.price = "Preço deve ser um valor positivo maior que zero.";
-    }
-
-    const stockValue = typeof stock === 'number' ? stock : parseInt(String(stock), 10);
-    if (isNaN(stockValue) || stockValue < 0) {
-      newErrors.stock = "Estoque deve ser um número maior que zero.";
-    }
-
-    return newErrors;
-  };
-
-
-
-
-  const handleSubmit = async (event: React.FormEvent) => {
-      event.preventDefault();
-  
-      const validationErrors = validateForm();
-      if (Object.keys(validationErrors).length > 0) {
-        setErrors(validationErrors);
-        return;
-      }
-  
-      const token = localStorage.getItem('token');
-      
-      // Define se é POST (criar) ou PUT (editar)
-      const method = productToEdit ? 'PUT' : 'POST';
-      const url = productToEdit 
-          ? `http://localhost:3000/api/produtos/${productToEdit.code}` 
-          : 'http://localhost:3000/api/produtos';
-  
-      try {
-          const response = await fetch(url, {
-              method: method,
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${token}` 
-              },
-              body: JSON.stringify({
-                  code,
-                  name,
-                  category,
-                  price,
-                  stock
-              })
-          });
-  
-          const data = await response.json();
-  
-          if (response.ok) {
-              alert(productToEdit ? 'Produto atualizado!' : 'Produto cadastrado!');
-              onSuccess();
-              onClose();
-          } else {
-              alert(data.message || "Erro ao salvar");
-          }
-  
-      } catch (error) {
-          alert("Erro de conexão." + error);
-      }
+        return newErrors;
     };
 
-  
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          
-        <div className="modal-header">
-            <h2>Cadastrar Novo Produto (API)</h2>
-            <button className="modal-close-button" onClick={onClose}>
-                &times;
-            </button>
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+
+        const validationErrors = validateForm();
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            const payload = {
+                code,
+                name,
+                category,
+                price: parseFloat(price),
+                stock: parseInt(stock)
+            };
+
+            if (productToEdit) {
+                // Se sua API usa o CODE na URL:
+                await api.put(`/produtos/${productToEdit.code}`, payload);
+                alert('Produto atualizado!');
+            } else {
+                await api.post('/produtos', payload);
+                alert('Produto cadastrado!');
+            }
+
+            onSuccess();
+            onClose();
+        } catch (error) {
+            const msg = (error as { response?: { data?: { message?: string } } }).response?.data?.message || "Erro ao salvar produto";
+            alert(msg);
+            console.error(error);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                
+                <div className="modal-header">
+                    <h2>{productToEdit ? 'Editar Produto' : 'Novo Produto'}</h2>
+                    <button className="modal-close-button" onClick={onClose}>&times;</button>
+                </div>
+
+                <form className="modal-form" onSubmit={handleSubmit}>
+                    <div className="form-group">
+                        <label>Código do Produto:</label>
+                        <input
+                            type="text"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                            disabled={!!productToEdit} // Geralmente não se edita o código único
+                            className={errors.code ? 'input-error' : ''}
+                        />
+                        {errors.code && <span className="error-message">{errors.code}</span>}
+                    </div>
+
+                    <div className="form-group">
+                        <label>Nome:</label>
+                        <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className={errors.name ? 'input-error' : ''}
+                        />
+                        {errors.name && <span className="error-message">{errors.name}</span>}
+                    </div>
+
+                    <div className="form-group">
+                        <label>Categoria:</label>
+                        <input
+                            type="text"
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
+                            className={errors.category ? 'input-error' : ''}
+                        />
+                        {errors.category && <span className="error-message">{errors.category}</span>}
+                    </div>
+
+                    <div className="form-group-row" style={{ display: 'flex', gap: '10px' }}>
+                        <div className="form-group" style={{ flex: 1 }}>
+                            <label>Preço (R$):</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={price}
+                                onChange={(e) => setPrice(e.target.value)}
+                                className={errors.price ? 'input-error' : ''}
+                            />
+                            {errors.price && <span className="error-message">{errors.price}</span>}
+                        </div>
+
+                        <div className="form-group" style={{ flex: 1 }}>
+                            <label>Estoque:</label>
+                            <input
+                                type="number"
+                                value={stock}
+                                onChange={(e) => setStock(e.target.value)}
+                                className={errors.stock ? 'input-error' : ''}
+                            />
+                            {errors.stock && <span className="error-message">{errors.stock}</span>}
+                        </div>
+                    </div>
+
+                    <button 
+                        type="submit" 
+                        className="form-submit-button"
+                        disabled={isSubmitting}
+                    >
+                        {isSubmitting ? 'Salvando...' : (productToEdit ? 'Salvar Alterações' : 'Cadastrar Produto')}
+                    </button>
+                </form>
+            </div>
         </div>
-
-        <h2>{productToEdit ? 'Editar Produto' : 'Cadastrar Novo Produto'}</h2>
-
-        <form className="modal-form" onSubmit={handleSubmit}>
-            
-            {submissionError && (
-                 <div className="p-3 bg-red-100 text-red-700 rounded-lg text-sm font-medium">{submissionError}</div>
-            )}
-            <div className="form-group">
-                <label htmlFor="code">Código:</label>
-                <input
-                    type="text" 
-                    id="code"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    // O estilo inline é mantido, mas você pode substituí-lo por uma classe no seu CSS
-                    style={{ borderColor: errors.code ? '#e63946' : '#ccc' }} 
-                />
-                {errors.code && <span className="error-message">{errors.code}</span>}
-            </div>
-            
-            <div className="form-group">
-                <label htmlFor="name">Nome:</label>
-                <input
-                    type="text"
-                    id="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    style={{ borderColor: errors.name ? '#e63946' : '#ccc' }}
-                />
-                {errors.name && <span className="error-message">{errors.name}</span>}
-            </div>
-            <div className="form-group">
-                <label htmlFor="category">Categoria:</label>
-                <input
-                    type="text"
-                    id="category"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    style={{ borderColor: errors.category ? '#e63946' : '#ccc' }}
-                />
-                {errors.category && <span className="error-message">{errors.category}</span>}
-            </div>
-            <div className="form-group-row"> 
-                <div className="form-group half-width">
-                    <label htmlFor="price">Preço (R$):</label>
-                    <input
-                        type="number"
-                        id="price"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                        step="0.01"
-                        min="0"
-                        style={{ borderColor: errors.price ? '#e63946' : '#ccc' }}
-                    />
-                    {errors.price && <span className="error-message">{errors.price}</span>}
-                </div>
-                <div className="form-group half-width">
-                    <label htmlFor="stock">Estoque:</label>
-                    <input
-                        type="number"
-                        id="stock"
-                        value={stock}
-                        onChange={(e) => setStock(e.target.value)}
-                        min="0"
-                        style={{ borderColor: errors.stock ? '#e63946' : '#ccc' }}
-                    />
-                    {errors.stock && <span className="error-message">{errors.stock}</span>}
-                </div>
-            </div>
-            
-            <button type="submit" className="form-submit-button">
-                {productToEdit ? 'Salvar Alterações' : 'Cadastrar'}
-            </button>
-        </form>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default ModalProduto;
