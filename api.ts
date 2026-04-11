@@ -6,7 +6,7 @@ import axios, { type AxiosInstance } from 'axios';
  */
 const api: AxiosInstance = axios.create({
   // Buscamos a URL do .env ou usamos o localhost como fallback
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://ecommerce-the-lab-suplements-backend-e9xr.onrender.com',
   headers: {
     'Content-Type': 'application/json',
   },
